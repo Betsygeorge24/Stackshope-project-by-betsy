@@ -2,7 +2,6 @@ from django.db import models
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils.text import slugify
-from seller.models import Product
 class CustomUser(AbstractUser):
     ROLE_CHOICES=(('ADMIN','Admin'),
                 ('SELLER','Seller'),
