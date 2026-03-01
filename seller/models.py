@@ -30,6 +30,8 @@ class Product(models.Model):
     approval_status = models.CharField(max_length=20, default='PENDING')
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    def __str__(self):
+        return self.name
     def save(self, *args, **kwargs):
         if not self.slug:
             base_slug = slugify(self.name)
@@ -82,6 +84,8 @@ class ProductImage(models.Model):
     image_url = models.ImageField(upload_to='product_images/', blank=True, null=True)
     alt_text = models.CharField(max_length=255, blank=True)
     is_primary = models.BooleanField(default=False)
+    def __str__(self):
+        return f"Image for {self.variant.product.name} ({'Primary' if self.is_primary else 'Secondary'})"
 
 class Attribute(models.Model):
     name = models.CharField(max_length=100)
