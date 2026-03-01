@@ -184,10 +184,13 @@
 
                         <div class="mt-auto pt-4 border-t border-muted/20 flex items-center justify-between">
                             <span class="text-2xl font-extrabold text-dark">${{ x.selling_price }}</span>
-                            <button
-                                class="bg-dark text-light p-2.5 rounded-lg hover:bg-accent hover:text-dark transition-all duration-200 border border-transparent hover:border-dark shadow-sm">
-                                <span class="material-icons text-sm">add_shopping_cart</span>
-                            </button>
+                            <form action="{% url 'add_to_cart' x.id %}" method="POST">
+                                {% csrf_token %}
+                                <button type="submit"
+                                    class="bg-dark text-light p-2.5 rounded-lg hover:bg-accent hover:text-dark transition-all duration-200 border border-transparent hover:border-dark shadow-sm">
+                                    <span class="material-icons text-sm">add_shopping_cart</span>
+                                </button>
+                            </form>
                         </div>
 
                     </div>

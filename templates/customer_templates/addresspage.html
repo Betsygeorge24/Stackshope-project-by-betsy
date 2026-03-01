@@ -22,14 +22,13 @@
     </aside>
 
     <main class="flex-grow flex flex-col items-center justify-start p-8 pt-12 overflow-y-auto hide-scrollbar">
+        {% include "core_templates/messages.html" %}
 
         <div class="bg-white rounded-xl shadow-sm w-full max-w-4xl p-10 lg:p-14 relative">
 
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10 border-b border-[#ACBAC4]/30 pb-6">
                 <div>
-                    <h2 class="text-2xl font-bold text-[#30364F]">
-                        My Addresses
-                    </h2>
+                    <h2 class="text-2xl font-bold text-[#30364F]">My Addresses</h2>
                     <p class="text-[#ACBAC4] text-sm font-medium mt-1">Manage your shipping and billing addresses.</p>
                 </div>
                 <button onclick="openModal('addAddressModal')" class="bg-[#30364F] text-[#F0F0DB] px-6 py-2.5 rounded-lg text-sm font-bold hover:opacity-90 shadow-md transition flex items-center justify-center gap-2">
@@ -38,129 +37,150 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                <div class="relative bg-[#F0F0DB]/10 border-2 border-[#30364F] rounded-xl p-6 shadow-sm transition-all">
-                    <div class="absolute top-0 right-0 bg-[#30364F] text-[#F0F0DB] text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-bl-lg rounded-tr-lg">
+                
+                {% for address in addresses %}
+                
+                <div class="relative {% if address.is_default %}bg-[#F0F0DB]/10 border-2 border-[#30364F]{% else %}bg-white border border-[#ACBAC4]/50 hover:border-[#30364F]/50{% endif %} rounded-xl p-6 shadow-sm transition-all group flex flex-col">
+                    
+                    {% if address.is_default %}
+                    <div class="absolute top-0 right-0 bg-[#30364F] text-[#F0F0DB] text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-bl-lg rounded-tr-lg z-10">
                         Default
                     </div>
+                    {% endif %}
 
-                    <div class="mb-4">
-                        <h3 class="font-bold text-[#30364F] text-lg flex items-center gap-2">
-                            <span class="material-icons text-[#30364F] text-[20px]">home</span> Home
-                        </h3>
-                        <p class="text-[#30364F] font-bold mt-2">{{ user.first_name }} {{ user.last_name }}</p>
-                    </div>
-
-                    <div class="text-sm text-[#ACBAC4] space-y-1 mb-6">
-                        <p>123 StackShop Avenue, Suite 400</p>
-                        <p>Silicon Valley, CA 94025</p>
-                        <p>United States</p>
-                        <p class="pt-2 text-[#30364F] font-medium flex items-center gap-2">
-                            <span class="material-icons text-[16px] text-[#ACBAC4]">phone</span> +1 (555) 123-4567
-                        </p>
-                    </div>
-
-                    <div class="flex items-center gap-4 pt-4 border-t border-[#ACBAC4]/20">
-                        <button onclick="openModal('editAddressModal')" class="text-sm font-bold text-[#30364F] hover:text-[#E1D9BC] transition-colors">Edit</button>
-                    </div>
-                </div>
-
-                <div class="relative bg-white border border-[#ACBAC4]/50 hover:border-[#30364F]/50 rounded-xl p-6 shadow-sm transition-all group">
-                    
                     <div class="mb-4 flex justify-between items-start">
                         <h3 class="font-bold text-[#30364F] text-lg flex items-center gap-2">
-                            <span class="material-icons text-[#ACBAC4] text-[20px]">work</span> Office
+                            <span class="material-icons text-[#30364F] text-[20px]">
+                                {% if address.address_type|lower == 'office' %}work{% else %}home{% endif %}
+                            </span> 
+                            {{ address.full_name }}
                         </h3>
+                        <span class="text-[10px] font-extrabold text-[#ACBAC4] uppercase tracking-widest border border-[#ACBAC4]/40 px-2 py-0.5 rounded">{{ address.address_type }}</span>
                     </div>
 
-                    <div class="text-sm text-[#ACBAC4] space-y-1 mb-6">
-                        <p class="text-[#30364F] font-bold mb-1">StackShop HQ</p>
-                        <p>987 Tech Boulevard, Floor 12</p>
-                        <p>San Francisco, CA 94105</p>
-                        <p>United States</p>
-                        <p class="pt-2 text-[#30364F] font-medium flex items-center gap-2">
-                            <span class="material-icons text-[16px] text-[#ACBAC4]">phone</span> +1 (555) 987-6543
+                    <div class="text-sm text-[#ACBAC4] space-y-1 mb-6 flex-grow">
+                        <p class="text-[#30364F] font-medium">{{ address.house_info }}</p>
+                        <p>{{ address.locality }}{% if address.landmark %}, Near {{ address.landmark }}{% endif %}</p>
+                        <p>{{ address.city }}, {{ address.state }} {{ address.pincode }}</p>
+                        <p>{{ address.country }}</p>
+                        <p class="pt-3 text-[#30364F] font-bold flex items-center gap-2">
+                            <span class="material-icons text-[16px] text-[#ACBAC4]">phone</span> {{ address.phone_number }}
                         </p>
                     </div>
 
-                    <div class="flex items-center justify-between pt-4 border-t border-[#ACBAC4]/20">
+                    <div class="flex items-center justify-between pt-4 border-t border-[#ACBAC4]/20 mt-auto">
                         <div class="flex gap-4">
-                            <button onclick="openModal('editAddressModal')" class="text-sm font-bold text-[#30364F] hover:text-[#E1D9BC] transition-colors">Edit</button>
-                            <button class="text-sm font-bold text-red-500 hover:text-red-700 transition-colors">Delete</button>
+                            <button onclick="openEditModal('{{ address.id }}', '{{ address.full_name|escapejs }}', '{{ address.phone_number|escapejs }}', '{{ address.house_info|escapejs }}', '{{ address.locality|escapejs }}', '{{ address.landmark|escapejs }}', '{{ address.city|escapejs }}', '{{ address.state|escapejs }}', '{{ address.pincode|escapejs }}', '{{ address.country|escapejs }}', '{{ address.address_type|escapejs }}', '{{ address.is_default}}')" class="text-sm font-bold text-[#30364F] hover:text-[#E1D9BC] transition-colors">Edit</button>
+                            
+                            <form action="{% url 'delete_address' address.id %}" method="POST" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" class="text-sm font-bold text-red-500 hover:text-red-700 transition-colors">Delete</button>
+                            </form>
                         </div>
-                        <form action="#" method="POST">
+                        
+                        {% if not address.is_default %}
+                        <form action="{% url 'set_default_address' %}" method="POST">
                             {% csrf_token %}
+                            <input type="hidden" name="address_id" value="{{ address.id }}">
                             <button type="submit" class="text-xs font-bold text-[#ACBAC4] hover:text-[#30364F] uppercase tracking-wide transition-colors">Set as Default</button>
                         </form>
+                        {% endif %}
                     </div>
                 </div>
+
+                {% empty %}
+                
+                <div class="col-span-full py-12 text-center border-2 border-dashed border-[#ACBAC4]/50 rounded-xl">
+                    <span class="material-icons text-5xl text-[#ACBAC4] mb-3">location_off</span>
+                    <h3 class="text-lg font-bold text-[#30364F]">No Addresses Found</h3>
+                    <p class="text-[#ACBAC4] text-sm">Add a new address to speed up your checkout process.</p>
                 </div>
-
-        </div>
-
-        <div class="mt-8 flex gap-8 text-xs font-bold text-[#ACBAC4]">
-            <a href="#" class="hover:text-[#30364F] transition-colors uppercase">Privacy Policy</a>
-            <a href="#" class="hover:text-[#30364F] transition-colors uppercase">Security Settings</a>
-            <a href="#" class="hover:text-[#30364F] transition-colors uppercase">Request Account Data</a>
-        </div>
-
+                
+                {% endfor %}
+            </div>
+            </div>
     </main>
 
     <div id="addAddressModal" class="fixed inset-0 z-[100] flex items-center justify-center hidden">
         <div class="absolute inset-0 bg-[#30364F]/70 backdrop-blur-sm transition-opacity" onclick="closeModal('addAddressModal')"></div>
         
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-8 lg:p-10 transform scale-95 opacity-0 transition-all duration-300 max-h-[90vh] overflow-y-auto hide-scrollbar" id="modalBox_addAddressModal">
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl p-8 lg:p-10 transform scale-95 opacity-0 transition-all duration-300 max-h-[90vh] overflow-y-auto hide-scrollbar" id="modalBox_addAddressModal">
             <button onclick="closeModal('addAddressModal')" class="absolute top-6 right-6 text-[#ACBAC4] hover:text-[#30364F] transition-colors">
                 <span class="material-icons">close</span>
             </button>
             
             <h2 class="text-2xl font-bold text-[#30364F] mb-2">Add New Address</h2>
-            <p class="text-sm text-[#ACBAC4] font-medium mb-8">Enter your shipping details below.</p>
+            <p class="text-sm text-[#ACBAC4] font-medium mb-8">Enter your shipping details below. Auto-fill available for Indian Pincodes.</p>
             
-            <form action="#" method="POST" class="space-y-6">
+            <form action="{% url 'add_address' %}" method="POST" class="space-y-6">
                 {% csrf_token %}
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">Full Name</label>
-                        <input type="text" name="full_name" required class="w-full px-4 py-3 border border-[#ACBAC4] rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F]">
+                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">First Name <span class="text-red-500">*</span></label>
+                        <input type="text" name="first_name" required class="w-full px-4 py-3 border border-[#ACBAC4]/50 rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F]">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">Phone Number</label>
-                        <input type="tel" name="phone" required class="w-full px-4 py-3 border border-[#ACBAC4] rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F]">
-                    </div>
-
-                    <div class="md:col-span-2">
-                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">Street Address</label>
-                        <input type="text" name="street_address" placeholder="123 Main St, Apartment, Suite, etc." required class="w-full px-4 py-3 border border-[#ACBAC4] rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F]">
+                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">Last Name <span class="text-red-500">*</span></label>
+                        <input type="text" name="last_name" required class="w-full px-4 py-3 border border-[#ACBAC4]/50 rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F]">
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">City</label>
-                        <input type="text" name="city" required class="w-full px-4 py-3 border border-[#ACBAC4] rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F]">
+                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">Phone Number <span class="text-red-500">*</span></label>
+                        <input type="tel" name="phone_number" required class="w-full px-4 py-3 border border-[#ACBAC4]/50 rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F]">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">State / Province</label>
-                        <input type="text" name="state" required class="w-full px-4 py-3 border border-[#ACBAC4] rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F]">
+                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">PIN Code <span class="text-red-500">*</span></label>
+                        <input type="text" name="pincode" id="add_pincode" maxlength="6" required class="w-full px-4 py-3 border border-[#ACBAC4]/50 rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F] font-bold" placeholder="e.g. 686632">
+                        <p id="add_pincode_msg" class="text-xs mt-1 text-red-500 hidden font-bold">Invalid Pincode</p>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">ZIP / Postal Code</label>
-                        <input type="text" name="zip_code" required class="w-full px-4 py-3 border border-[#ACBAC4] rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F]">
+                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">Locality / Area <span class="text-red-500">*</span></label>
+                        <input type="text" name="locality" id="add_locality" required readonly class="w-full px-4 py-3 border border-[#ACBAC4]/50 rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F] bg-[#F0F0DB]/50">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">Country</label>
-                        <select name="country" required class="w-full px-4 py-3 border border-[#ACBAC4] rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F] bg-white">
-                            <option value="US">United States</option>
-                            <option value="UK">United Kingdom</option>
-                            <option value="CA">Canada</option>
-                            <option value="AU">Australia</option>
-                            <option value="IN">India</option>
+                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">City / District <span class="text-red-500">*</span></label>
+                        <input type="text" name="city" id="add_city" required readonly class="w-full px-4 py-3 border border-[#ACBAC4]/50 rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F] bg-[#F0F0DB]/50">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">State / Province <span class="text-red-500">*</span></label>
+                        <input type="text" name="state" id="add_state" required readonly class="w-full px-4 py-3 border border-[#ACBAC4]/50 rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F] bg-[#F0F0DB]/50">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">Country <span class="text-red-500">*</span></label>
+                        <select name="country" required class="w-full px-4 py-3 border border-[#ACBAC4]/50 rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F] bg-white">
+                            <option value="India" selected>India</option>
+                            <option value="United States">United States</option>
+                            <option value="United Kingdom">United Kingdom</option>
                         </select>
                     </div>
 
-                    <div class="md:col-span-2 flex items-center gap-3 pt-2">
-                        <input type="checkbox" id="set_default_new" name="is_default" class="w-5 h-5 rounded border-[#ACBAC4] text-[#30364F] focus:ring-[#30364F] cursor-pointer">
-                        <label for="set_default_new" class="text-sm font-bold text-[#30364F] cursor-pointer">Set as default address</label>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">House Info / Flat / Building <span class="text-red-500">*</span></label>
+                        <input type="text" name="house_info" placeholder="House/Flat No., Building Name, Street" required class="w-full px-4 py-3 border border-[#ACBAC4]/50 rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F]">
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">Landmark (Optional)</label>
+                        <input type="text" name="landmark" placeholder="e.g. Opposite City Hospital" class="w-full px-4 py-3 border border-[#ACBAC4]/50 rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F]">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">Address Type <span class="text-red-500">*</span></label>
+                        <div class="flex gap-4 mt-2">
+                            <label class="flex items-center gap-2 cursor-pointer text-sm font-medium text-[#30364F]">
+                                <input type="radio" name="address_type" value="Home" checked class="w-4 h-4 text-[#30364F] focus:ring-[#30364F]"> Home
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer text-sm font-medium text-[#30364F]">
+                                <input type="radio" name="address_type" value="Office" class="w-4 h-4 text-[#30364F] focus:ring-[#30364F]"> Office
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3 pt-6">
+                        <input type="checkbox" id="add_is_default" name="is_default" class="w-5 h-5 rounded border-[#ACBAC4] text-[#30364F] focus:ring-[#30364F] cursor-pointer">
+                        <label for="add_is_default" class="text-sm font-bold text-[#30364F] cursor-pointer">Set as default address</label>
                     </div>
                 </div>
                 
@@ -175,59 +195,81 @@
     <div id="editAddressModal" class="fixed inset-0 z-[100] flex items-center justify-center hidden">
         <div class="absolute inset-0 bg-[#30364F]/70 backdrop-blur-sm transition-opacity" onclick="closeModal('editAddressModal')"></div>
         
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-8 lg:p-10 transform scale-95 opacity-0 transition-all duration-300 max-h-[90vh] overflow-y-auto hide-scrollbar" id="modalBox_editAddressModal">
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl p-8 lg:p-10 transform scale-95 opacity-0 transition-all duration-300 max-h-[90vh] overflow-y-auto hide-scrollbar" id="modalBox_editAddressModal">
             <button onclick="closeModal('editAddressModal')" class="absolute top-6 right-6 text-[#ACBAC4] hover:text-[#30364F] transition-colors">
                 <span class="material-icons">close</span>
             </button>
             
-            <h2 class="text-2xl font-bold text-[#30364F] mb-2">Edit Address</h2>
-            <p class="text-sm text-[#ACBAC4] font-medium mb-8">Update your shipping details below.</p>
+            <h2 class="text-2xl font-bold text-[#30364F] mb-2">Update Address</h2>
+            <p class="text-sm text-[#ACBAC4] font-medium mb-8">Modify your shipping details below.</p>
             
-            <form action="#" method="POST" class="space-y-6">
+            <form action="{% url 'update_address' %}" method="POST" class="space-y-6">
                 {% csrf_token %}
+                <input type="hidden" name="address_id" id="edit_address_id" value="">
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">Full Name</label>
-                        <input type="text" name="full_name" value="StackShop HQ" required class="w-full px-4 py-3 border border-[#ACBAC4] rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F]">
+                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">First Name <span class="text-red-500">*</span></label>
+                        <input type="text" name="first_name" id="edit_first_name" required class="w-full px-4 py-3 border border-[#ACBAC4]/50 rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F]">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">Phone Number</label>
-                        <input type="tel" name="phone" value="+1 (555) 987-6543" required class="w-full px-4 py-3 border border-[#ACBAC4] rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F]">
-                    </div>
-
-                    <div class="md:col-span-2">
-                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">Street Address</label>
-                        <input type="text" name="street_address" value="987 Tech Boulevard, Floor 12" required class="w-full px-4 py-3 border border-[#ACBAC4] rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F]">
+                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">Last Name <span class="text-red-500">*</span></label>
+                        <input type="text" name="last_name" id="edit_last_name" required class="w-full px-4 py-3 border border-[#ACBAC4]/50 rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F]">
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">City</label>
-                        <input type="text" name="city" value="San Francisco" required class="w-full px-4 py-3 border border-[#ACBAC4] rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F]">
+                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">Phone Number <span class="text-red-500">*</span></label>
+                        <input type="tel" name="phone_number" id="edit_phone_number" required class="w-full px-4 py-3 border border-[#ACBAC4]/50 rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F]">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">State / Province</label>
-                        <input type="text" name="state" value="CA" required class="w-full px-4 py-3 border border-[#ACBAC4] rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F]">
+                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">PIN Code <span class="text-red-500">*</span></label>
+                        <input type="text" name="pincode" id="edit_pincode" maxlength="6" required class="w-full px-4 py-3 border border-[#ACBAC4]/50 rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F] font-bold">
+                        <p id="edit_pincode_msg" class="text-xs mt-1 text-red-500 hidden font-bold">Invalid Pincode</p>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">ZIP / Postal Code</label>
-                        <input type="text" name="zip_code" value="94105" required class="w-full px-4 py-3 border border-[#ACBAC4] rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F]">
+                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">Locality / Area <span class="text-red-500">*</span></label>
+                        <input type="text" name="locality" id="edit_locality" required class="w-full px-4 py-3 border border-[#ACBAC4]/50 rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F]">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">Country</label>
-                        <select name="country" required class="w-full px-4 py-3 border border-[#ACBAC4] rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F] bg-white">
-                            <option value="US" selected>United States</option>
-                            <option value="UK">United Kingdom</option>
-                            <option value="CA">Canada</option>
-                            <option value="AU">Australia</option>
-                            <option value="IN">India</option>
+                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">City / District <span class="text-red-500">*</span></label>
+                        <input type="text" name="city" id="edit_city" required class="w-full px-4 py-3 border border-[#ACBAC4]/50 rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F]">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">State / Province <span class="text-red-500">*</span></label>
+                        <input type="text" name="state" id="edit_state" required class="w-full px-4 py-3 border border-[#ACBAC4]/50 rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F]">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">Country <span class="text-red-500">*</span></label>
+                        <select name="country" id="edit_country" required class="w-full px-4 py-3 border border-[#ACBAC4]/50 rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F] bg-white">
+                            <option value="India">India</option>
+                            <option value="United States">United States</option>
+                            <option value="United Kingdom">United Kingdom</option>
                         </select>
                     </div>
 
-                    <div class="md:col-span-2 flex items-center gap-3 pt-2">
-                        <input type="checkbox" id="set_default_edit" name="is_default" class="w-5 h-5 rounded border-[#ACBAC4] text-[#30364F] focus:ring-[#30364F] cursor-pointer">
-                        <label for="set_default_edit" class="text-sm font-bold text-[#30364F] cursor-pointer">Set as default address</label>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">House Info / Flat / Building <span class="text-red-500">*</span></label>
+                        <input type="text" name="house_info" id="edit_house_info" required class="w-full px-4 py-3 border border-[#ACBAC4]/50 rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F]">
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">Landmark (Optional)</label>
+                        <input type="text" name="landmark" id="edit_landmark" class="w-full px-4 py-3 border border-[#ACBAC4]/50 rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F]">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-[#30364F] uppercase mb-2">Address Type <span class="text-red-500">*</span></label>
+                        <select name="address_type" id="edit_address_type" class="w-full px-4 py-3 border border-[#ACBAC4]/50 rounded-lg focus:outline-none focus:border-[#30364F] focus:ring-1 focus:ring-[#30364F] transition text-[#30364F] bg-white">
+                            <option value="Home">Home</option>
+                            <option value="Office">Office</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-center gap-3 pt-6">
+                        <input type="checkbox" id="edit_is_default" name="is_default" class="w-5 h-5 rounded border-[#ACBAC4] text-[#30364F] focus:ring-[#30364F] cursor-pointer">
+                        <label for="edit_is_default" class="text-sm font-bold text-[#30364F] cursor-pointer">Set as default address</label>
                     </div>
                 </div>
                 
@@ -240,6 +282,7 @@
     </div>
 
     <script>
+        // Modal Handlers
         function openModal(modalId) {
             const modal = document.getElementById(modalId);
             const modalBox = document.getElementById('modalBox_' + modalId);
@@ -258,6 +301,84 @@
                 modal.classList.add('hidden');
             }, 300);
         }
+
+        // Dedicated function to populate the Edit Modal
+        function openEditModal(id, fullName, phone, houseInfo, locality, landmark, city, state, pincode, country, addressType, isDefault) {
+            document.getElementById('edit_address_id').value = id;
+            
+            const names = fullName.trim().split(' ');
+            const firstName = names[0] || '';
+            const lastName = names.slice(1).join(' ') || '';
+            
+            document.getElementById('edit_first_name').value = firstName;
+            document.getElementById('edit_last_name').value = lastName;
+            
+            document.getElementById('edit_phone_number').value = phone;
+            document.getElementById('edit_house_info').value = houseInfo;
+            document.getElementById('edit_locality').value = locality;
+            document.getElementById('edit_landmark').value = landmark;
+            document.getElementById('edit_city').value = city;
+            document.getElementById('edit_state').value = state;
+            document.getElementById('edit_pincode').value = pincode;
+            document.getElementById('edit_country').value = country;
+            document.getElementById('edit_address_type').value = addressType;
+            
+            document.getElementById('edit_is_default').checked = (isDefault === 'True' || isDefault === 'true');
+            
+            openModal('editAddressModal');
+        }
+
+        // Reusable PIN Code API Logic matching new field names
+        function setupPincodeAPI(pincodeInputId, localityInputId, cityInputId, stateInputId, msgId) {
+            document.getElementById(pincodeInputId).addEventListener('input', function (e) {
+                const pincode = e.target.value;
+                const msgEl = document.getElementById(msgId);
+                const localityEl = document.getElementById(localityInputId);
+                const cityEl = document.getElementById(cityInputId);
+                const stateEl = document.getElementById(stateInputId);
+
+                // Fetch data only when exact 6 digits are entered
+                if (pincode.length === 6) {
+                    fetch(`https://api.postalpincode.in/pincode/${pincode}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data[0].Status === 'Success') {
+                                msgEl.classList.add('hidden');
+                                
+                                const po = data[0].PostOffice[0];
+                                
+                                // Map API data to inputs
+                                localityEl.value = po.Name;
+                                cityEl.value = po.District;
+                                stateEl.value = po.State;
+                                
+                                // Unlock fields just in case the user wants to tweak them
+                                localityEl.removeAttribute('readonly');
+                                cityEl.removeAttribute('readonly');
+                                stateEl.removeAttribute('readonly');
+                                
+                                localityEl.classList.remove('bg-[#F0F0DB]/50');
+                                cityEl.classList.remove('bg-[#F0F0DB]/50');
+                                stateEl.classList.remove('bg-[#F0F0DB]/50');
+                            } else {
+                                msgEl.innerText = "Invalid Pincode. Please check again.";
+                                msgEl.classList.remove('hidden');
+                                localityEl.value = '';
+                                cityEl.value = '';
+                                stateEl.value = '';
+                            }
+                        })
+                        .catch(error => console.error('Error fetching API:', error));
+                } else {
+                    msgEl.classList.add('hidden');
+                }
+            });
+        }
+
+        // Initialize API for both Add and Edit modals
+        setupPincodeAPI('add_pincode', 'add_locality', 'add_city', 'add_state', 'add_pincode_msg');
+        setupPincodeAPI('edit_pincode', 'edit_locality', 'edit_city', 'edit_state', 'edit_pincode_msg');
+
     </script>
 </body>
 </html>

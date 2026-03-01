@@ -45,7 +45,7 @@
     {% include "customer_templates/Navbar.html" %}
 
     <main class="max-w-7xl mx-auto w-full px-4 py-8 md:py-12 flex-grow">
-        
+            {% include "core_templates/messages.html" %}
         <div class="mb-8">
             <h1 class="text-3xl md:text-4xl font-extrabold text-dark tracking-tight">Shopping Cart</h1>
             <p class="text-muted font-medium mt-2">Review your items and proceed to checkout.</p>
@@ -67,19 +67,19 @@
                     </form>
 
                     <div class="w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0 bg-light rounded-xl overflow-hidden border border-muted/20">
-                        {% if item.product.image %}
-                            <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="w-full h-full object-cover mix-blend-multiply p-2">
+                        {% if item.variant.images.first.image_url %}
+                            <img src="{{ item.variant.images.first.image_url.url }}" alt="{{ item.variant.product.name }}" class="w-full h-full object-cover mix-blend-multiply p-2">
                         {% else %}
                             <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&q=80&w=300" alt="Placeholder" class="w-full h-full object-cover mix-blend-multiply p-2">
                         {% endif %}
                     </div>
 
                     <div class="flex-grow text-center sm:text-left w-full sm:w-auto">
-                        <span class="text-[10px] font-bold uppercase tracking-widest text-muted">{{ item.product.category.name|default:"Category" }}</span>
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-muted">{{ item.variant.product.subcategory.name|default:"Category" }}</span>
                         <h3 class="text-lg font-bold text-dark leading-tight mt-1 mb-1">
-                            <a href="#" class="hover:text-muted transition-colors">{{ item.product.name|default:"Studio Bass Headphones" }}</a>
+                            <a href="#" class="hover:text-muted transition-colors">{{ item.variant.product.name|default:"Product" }}</a>
                         </h3>
-                        <p class="text-sm font-extrabold text-dark/70 mb-4">${{ item.product.price|default:"299.00" }} <span class="font-medium text-xs text-muted">/ each</span></p>
+                        <p class="text-sm font-extrabold text-dark/70 mb-4">₹{{ item.price_at_time|default:"299.00" }} <span class="font-medium text-xs text-muted">/ each</span></p>
 
                         <div class="flex items-center justify-center sm:justify-start gap-4">
                             
@@ -108,7 +108,7 @@
 
                     <div class="text-center sm:text-right sm:ml-auto w-full sm:w-auto mt-4 sm:mt-0">
                         <p class="text-xs text-muted font-bold uppercase tracking-wider mb-1">Total</p>
-                        <p class="text-xl font-extrabold text-dark">${{ item.get_total|default:"299.00" }}</p>
+                        <p class="text-xl font-extrabold text-dark">₹{{ item.get_total }}</p>
                     </div>
 
                 </div>
@@ -123,11 +123,11 @@
                     <div class="space-y-4 mb-6">
                         <div class="flex justify-between text-sm">
                             <span class="text-muted font-bold">Subtotal ({{ cart_items|length }} items)</span>
-                            <span class="text-dark font-extrabold">${{ cart_subtotal|default:"299.00" }}</span>
+                            <span class="text-dark font-extrabold">₹{{ cart_total|floatformat:2 }}</span>
                         </div>
                         <div class="flex justify-between text-sm">
                             <span class="text-muted font-bold">Estimated Tax</span>
-                            <span class="text-dark font-extrabold">${{ tax_amount|default:"24.00" }}</span>
+                            <span class="text-dark font-extrabold">₹{{ tax_amount|floatformat:2 }}</span>
                         </div>
                         <div class="flex justify-between text-sm">
                             <span class="text-muted font-bold">Shipping</span>
@@ -138,11 +138,11 @@
                     <div class="border-t border-muted/30 pt-4 mb-8">
                         <div class="flex justify-between items-center">
                             <span class="text-base font-bold text-dark uppercase tracking-wide">Total</span>
-                            <span class="text-2xl font-black text-dark">${{ cart_total|default:"323.00" }}</span>
+                            <span class="text-2xl font-black text-dark">₹{{ total_amount|floatformat:2 }}</span>
                         </div>
                     </div>
 
-                    <a href="{% url 'checkout' %}" class="w-full bg-dark hover:bg-opacity-90 text-light text-center py-4 rounded-xl font-bold text-sm uppercase tracking-widest transition-all shadow-lg shadow-dark/20 block flex items-center justify-center gap-2">
+                    <a href="{% url 'checkout'%}" class="w-full bg-dark hover:bg-opacity-90 text-light text-center py-4 rounded-xl font-bold text-sm uppercase tracking-widest transition-all shadow-lg shadow-dark/20 block flex items-center justify-center gap-2">
                         Proceed to Checkout <span class="material-icons text-[18px]">lock</span>
                     </a>
                     

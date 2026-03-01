@@ -40,7 +40,7 @@
                     {% url 'product_list' as products_url %}
                     <a href="{{ products_url }}"
                         class="transition-all py-1 {% if request.path == products_url %}text-light border-b-2 border-accent{% else %}text-muted hover:text-light{% endif %}">
-                        New Arrival
+                        All Products
                     </a>
 
                     <div class="relative group py-2">
@@ -160,12 +160,16 @@
                             </div>
                         </div>
                     </div>
-
-                    <button class="relative hover:text-light transition-colors ml-2">
-                        <span class="material-icons text-xl">shopping_bag</span>
+                    {% url 'cart_view' as cart_url %}
+                    <a href="{{ cart_url }}" class="relative hover:text-light transition-colors ml-2">
+                        {% if cart_items.count > 0 %}
+                        <span class="material-icons text-xl text-green-500">shopping_bag</span>
+                            {% else %}
+                            <span class="material-icons text-xl">shopping_bag</span>
+                            {% endif %}
                         <span
-                            class="absolute -top-1.5 -right-1.5 bg-accent text-dark text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">2</span>
-                    </button>
+                            class="absolute -top-1.5 -right-1.5 bg-accent text-dark text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">{{ cart_items.count }}</span>
+                    </a>
                 </div>
 
                 {% else %}

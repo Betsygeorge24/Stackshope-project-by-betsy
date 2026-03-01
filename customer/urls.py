@@ -20,9 +20,24 @@ urlpatterns = [
     path('updatecollection/', views.update_collection_view, name='updatecollection'),   
     path('deletecollection/<int:wishlist_id>/', views.delete_collection_view, name='deletecollection'), 
     #-------------------------------------------------------------------------------
+    
+    # for cart----------------------
+    path('cart/',views.cart_view,name='cart_view'),
+    path('addtocart/<int:id>/',views.add_to_cart_view,name='add_to_cart'),
+    path('removefromcart/<int:id>',views.remove_from_cart_view,name='remove_from_cart'),
+    path('updatecart/<int:id>/',views.update_cart_view,name='update_cart'),
+    path('checkout/',views.checkout_view,name='checkout'),
+    #----------------------------------------------------------------------------
+
+    # for address----------------------
+    path('add-address/',views.add_address_view,name='add_address'),
+    path('address/',views.address_view,name='address'),
+    path('update-address/',views.update_address_view,name='update_address'),
+    path('delete-address/<int:address_id>/',views.delete_address_view,name='delete_address'),
+    path('set-default-address/',views.set_default_address_view,name='set_default_address'),
+    #----------------------------------------------------------------------------
 
     # order history and address----------------------
     path('order-history/',views.orderhistory_view,name='order-history'),
-    path('address/',views.address_view,name='address'),
     #------------------------------------------------------------
 ]

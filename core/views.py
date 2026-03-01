@@ -4,11 +4,14 @@ from django.contrib.auth import login,logout,authenticate
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from core.decorators import admin_required,seller_required
+from customer.models import Cart,CartItem
 
 def home_view(request):
     user=request.user
     if user.is_authenticated:
-        return render(request,'core_templates/homepage.html',{'user':user})
+        cart=Cart.objects.filter(user=user).first()
+        cart_items=CartItem.objects.filter(cart=cart).prefetch_related('variant__product','variant__images')
+        return render(request,'core_templates/homepage.html',{'user':user,'cart_items':cart_items})
     return render(request,'core_templates/homepage.html')
 
 def register_view(request):
@@ -63,9 +66,13 @@ def logout_view(request):
     logout(request)
     return redirect('home')
 def category_view(request):
-    return render(request,'core_templates/categories.html')
+    cart=Cart.objects.filter(user=request.user).first()
+    cart_items=CartItem.objects.filter(cart=cart).prefetch_related('variant__product','variant__images')
+    return render(request,'core_templates/categories.html',{'cart_items':cart_items})
 def deals_view(request):
-    return render(request,'core_templates/dealspage.html')
+    cart=Cart.objects.filter(user=request.user).first()
+    cart_items=CartItem.objects.filter(cart=cart).prefetch_related('variant__product','variant__images')
+    return render(request,'core_templates/dealspage.html',{'cart_items':cart_items})
 
 
 

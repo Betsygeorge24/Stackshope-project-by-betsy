@@ -40,7 +40,6 @@
     </aside>
 
     <main class="flex-grow flex flex-col items-center justify-start p-8 overflow-y-auto">
-        {% include "core_templates/messages.html" %}
         <div class="bg-white rounded-xl shadow-sm w-full max-w-5xl p-10 lg:p-14">
 
             <div
@@ -189,7 +188,7 @@
                                                 </div>
                                             </div>
 
-                                            <form action="#" method="POST" class="inline">
+                                            <form action="{% url 'add_to_cart' item.variant.id %}" method="POST" class="inline">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="variant_id" value="{{ item.variant.id }}">
                                                 <button type="submit"
@@ -199,7 +198,7 @@
                                                 </button>
                                             </form>
 
-                                            <form action="{% url 'removewishlist' item.variant.id %}" method="POST"
+                                            <form action="{% url 'removewishlist' item.id %}" method="POST"
                                                 class="inline">
                                                 {% csrf_token %}
                                                 <button type="submit"
