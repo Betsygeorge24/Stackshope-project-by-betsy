@@ -58,7 +58,10 @@
         }
     </style>
 </head>
+
 <body class="bg-brand-nude dark:bg-background-dark text-primary selection:bg-primary/10">
+<form method="POST" enctype="multipart/form-data">
+   {% csrf_token %}
 <div class="flex h-screen overflow-hidden">
 <aside class="w-64 bg-primary text-white flex flex-col flex-shrink-0">
 <div class="p-8 flex items-center gap-3">
@@ -100,9 +103,9 @@
 </nav>
 <div class="p-4 border-t border-white/10">
 <div class="flex items-center gap-3 p-2">
-<img alt="Profile" class="w-10 h-10 rounded-full object-cover ring-2 ring-white/10" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBMm_z9tK8GwT2hi1w7V344hB12TFWMGMgJjPJrv1rCxzMYaPTk9mHpF7s4aGI2s4p8j83zdIS8GHcVz9fBCQr3z9RHreSdxgpoZFjwF1HudS_v-g_x-pq8NDE1MniPO9N8O0xmfdxIK_j4hU7VIBqCELC1pB5LWJ59sVv6O1IRG82C2VaOfVE2KliQjGiJOtFC5G1Jqh8EakXzollbEFUpkOnpZrXX6gRHAPHPvwgqVOPoKkFxovR_f4OLMVJrHBn7-xgtvsu_w9jM"/>
-<div class="flex-1 overflow-hidden">
-<p class="text-sm font-semibold truncate">Alex Rivera</p>
+<img alt="Profile" class="w-10 h-10 rounded-full object-cover ring-2 ring-white/10"
+     src="{% if profile.store_image %}{{ profile.store_image.url }}{% else %}/static/default_profile.png{% endif %}" /><div class="flex-1 overflow-hidden">
+<p class="text-sm font-semibold truncate">{{ request.user.username }} </p>
 <p class="text-xs text-white/50 truncate">Premium Merchant</p>
 </div>
 </div>
@@ -123,9 +126,9 @@
 <button class="px-6 py-2.5 rounded-xl border border-primary/10 font-bold text-sm text-primary/60 hover:bg-white transition-all">
                         Save Draft
                     </button>
-<button class="bg-primary text-white px-8 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-primary/10 hover:opacity-90 transition-all">
-                        Publish Product
-                    </button>
+<button type="submit" class="bg-primary text-white px-8 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-primary/10 hover:opacity-90 transition-all">
+    Publish Product
+</button>
 </div>
 </header>
 <div class="flex-1 overflow-y-auto p-12 custom-scrollbar">
@@ -147,6 +150,7 @@
 </div>
 </div>
 <div class="max-w-4xl mx-auto space-y-8">
+
 <div class="bg-white rounded-2xl p-8 shadow-sm border border-primary/5">
 <div class="flex items-center gap-3 mb-8">
 <span class="material-symbols-outlined text-primary/40">info</span>
@@ -154,78 +158,146 @@
 </div>
 <div class="grid grid-cols-1 gap-6">
 <div class="space-y-2">
-<label class="text-sm font-bold text-primary/70">Product Name</label>
-<input class="w-full px-4 py-3 rounded-xl border-primary/10 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none" placeholder="e.g. Premium Wireless Headphones" type="text"/>
+  <label class="text-sm font-bold text-primary/70">Product Name</label>
+  <input name="name" type="text" placeholder="e.g. Premium Wireless Headphones" required class="w-full px-4 py-3 rounded-xl border-primary/10 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none"/>
 </div>
 <div class="space-y-2">
 <label class="text-sm font-bold text-primary/70">Product Description</label>
-<textarea class="w-full px-4 py-3 rounded-xl border-primary/10 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none resize-none" placeholder="Describe the key features and benefits of your product..." rows="4"></textarea>
-</div>
+<textarea name="description" class="w-full px-4 py-3 rounded-xl border-primary/10 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none resize-none" rows="4"></textarea></div>
 <div class="grid grid-cols-2 gap-6">
 <div class="space-y-2">
 <label class="text-sm font-bold text-primary/70">Category</label>
-<select class="w-full px-4 py-3 rounded-xl border-primary/10 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none">
-<option>Select Category</option>
-<option>Electronics</option>
-<option>Accessories</option>
-<option>Footwear</option>
-<option>Home &amp; Living</option>
+<select name="category" class="w-full px-4 py-3 rounded-xl border-primary/10 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none" required>
+    <option value="">Select Category</option>
+    {% for sub in categories %}
+        <option value="{{ sub.id }}">{{ sub.name }}</option>
+    {% endfor %}
+</select>
+</div>
+<div class="space-y-2">
+<label class="text-sm font-bold text-primary/70">SubCategory</label>
+<select name="subcategory" class="w-full px-4 py-3 rounded-xl border-primary/10 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none" required>
+    <option value="">Select SubCategory</option>
+    {% for sub in subcategories %}
+        <option value="{{ sub.id }}">{{ sub.name }}</option>
+    {% endfor %}
 </select>
 </div>
 <div class="space-y-2">
 <label class="text-sm font-bold text-primary/70">Brand (Optional)</label>
-<input class="w-full px-4 py-3 rounded-xl border-primary/10 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none" placeholder="e.g. StackStyle" type="text"/>
-</div>
-</div>
-</div>
-</div>
-<div class="bg-white rounded-2xl p-8 shadow-sm border border-primary/5 opacity-60">
-<div class="flex items-center gap-3 mb-8">
-<span class="material-symbols-outlined text-primary/40">collections</span>
-<h3 class="text-lg font-extrabold text-primary">Step 2: Media Upload</h3>
-</div>
-<div class="border-2 border-dashed border-primary/10 rounded-2xl p-12 flex flex-col items-center justify-center bg-primary/[0.01]">
-<div class="w-16 h-16 bg-primary/5 rounded-full flex items-center justify-center mb-4">
-<span class="material-symbols-outlined text-primary/40 text-3xl">cloud_upload</span>
-</div>
-<p class="font-bold text-primary mb-1">Drag and drop images here</p>
-<p class="text-sm text-primary/40 mb-6">Support JPEG, PNG and MP4 (max. 10MB)</p>
-<button class="px-6 py-2 bg-white border border-primary/10 rounded-lg text-sm font-bold hover:bg-primary/5 transition-colors">
-                                Browse Files
-                            </button>
-</div>
-</div>
-<div class="bg-white rounded-2xl p-8 shadow-sm border border-primary/5 opacity-60">
-<div class="flex items-center gap-3 mb-8">
-<span class="material-symbols-outlined text-primary/40">payments</span>
-<h3 class="text-lg font-extrabold text-primary">Step 3: Pricing &amp; Inventory</h3>
-</div>
-<div class="grid grid-cols-3 gap-6">
+<input name="brand" class="w-full px-4 py-3 rounded-xl border-primary/10 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none" type="text"/>
 <div class="space-y-2">
-<label class="text-sm font-bold text-primary/70">Regular Price</label>
-<div class="relative">
-<span class="absolute left-4 top-1/2 -translate-y-1/2 text-primary/40 font-bold">$</span>
-<input class="w-full pl-8 pr-4 py-3 rounded-xl border-primary/10 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none" placeholder="0.00" type="number"/>
-</div>
-</div>
-<div class="space-y-2">
-<label class="text-sm font-bold text-primary/70">SKU</label>
-<input class="w-full px-4 py-3 rounded-xl border-primary/10 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none" placeholder="E.g. PRD-001" type="text"/>
-</div>
-<div class="space-y-2">
-<label class="text-sm font-bold text-primary/70">Stock Quantity</label>
-<input class="w-full px-4 py-3 rounded-xl border-primary/10 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none" placeholder="0" type="number"/>
+<label class="text-sm font-bold text-primary/70">Model Number (Optional)</label>
+<input name="model_number" class="w-full px-4 py-3 rounded-xl border-primary/10 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none" type="text"/>
 </div>
 </div>
 </div>
+</div>
+</div>
+
+<form method="POST" enctype="multipart/form-data">
+  {% csrf_token %}
+  
+  <div class="bg-white rounded-2xl p-8 shadow-sm border border-primary/5">
+    <div class="flex items-center gap-3 mb-8">
+      <span class="material-symbols-outlined text-primary/40">collections</span>
+      <h3 class="text-lg font-extrabold text-primary">Step 2: Media Upload</h3>
+    </div>
+    
+    <div class="border-2 border-dashed border-primary/10 rounded-2xl p-12 flex flex-col items-center justify-center bg-primary/[0.01]">
+      <div class="w-16 h-16 bg-primary/5 rounded-full flex items-center justify-center mb-4">
+        <span class="material-symbols-outlined text-primary/40 text-3xl">cloud_upload</span>
+      </div>
+      <p class="font-bold text-primary mb-1">Select images</p>
+      <p class="text-sm text-primary/40 mb-6">Support JPEG, PNG and MP4 (max. 10MB)</p>
+      
+      <!-- Simple file input -->
+      <input type="file" name="product_images" multiple class="px-6 py-2 bg-white border border-primary/10 rounded-lg text-sm font-bold hover:bg-primary/5 cursor-pointer">
+    </div>
+  </div>
+  
+  <button type="submit" class="mt-4 px-6 py-2 bg-primary text-white rounded-lg font-bold hover:bg-primary/80">Add Product</button>
+</form>
+ <div class="grid grid-cols-3 gap-6">
+        <!-- Pricing & Inventory -->
+        <div class="space-y-2">
+            <label class="text-sm font-bold text-primary/70">MRP</label>
+            <input name="mrp" type="number" placeholder="0.00"
+                class="w-full pl-4 pr-4 py-3 rounded-xl border-primary/10 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"/>
+        </div>
+
+        <div class="space-y-2">
+            <label class="text-sm font-bold text-primary/70">Selling Price</label>
+            <input name="selling_price" type="number" placeholder="0.00"
+                class="w-full pl-4 pr-4 py-3 rounded-xl border-primary/10 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"/>
+        </div>
+
+        
+        <div class="space-y-2">
+            <label class="text-sm font-bold text-primary/70">Cost Price</label>
+            <input name="cost_price" type="number" placeholder="0"
+                class="w-full pl-4 pr-4 py-3 rounded-xl border-primary/10 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"/>
+        </div>
+
+             <div class="space-y-2">
+            <label class="text-sm font-bold text-primary/70">weight</label>
+            <input name="weight" type="number" placeholder="0"
+                class="w-full pl-4 pr-4 py-3 rounded-xl border-primary/10 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"/>
+        </div>
+
+  <div class="space-y-2">
+            <label class="text-sm font-bold text-primary/70">Length</label>
+            <input name=" length" type="number" placeholder="0"
+                class="w-full pl-4 pr-4 py-3 rounded-xl border-primary/10 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"/>
+        </div>
+         <div class="space-y-2">
+            <label class="text-sm font-bold text-primary/70">width</label>
+            <input name=" width" type="number" placeholder="0"
+                class="w-full pl-4 pr-4 py-3 rounded-xl border-primary/10 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"/>
+        </div>
+
+          <div class="space-y-2">
+            <label class="text-sm font-bold text-primary/70">height</label>
+            <input name=" height" type="number" placeholder="0"
+                class="w-full pl-4 pr-4 py-3 rounded-xl border-primary/10 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"/>
+        </div>
+            <div class="space-y-2">
+            <label class="text-sm font-bold text-primary/70"> tax_percentage</label>
+            <input name="  tax_percentage" type="number" placeholder="0"
+                class="w-full pl-4 pr-4 py-3 rounded-xl border-primary/10 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"/>
+        </div>
+
+        <div class="space-y-2">
+            <label class="text-sm font-bold text-primary/70">Stock Quantity</label>
+            <input name="stock_quantity" type="number" placeholder="0"
+                class="w-full pl-4 pr-4 py-3 rounded-xl border-primary/10 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"/>
+        </div>
+    </div>
+
+    <!-- Dynamic Attributes -->
+    <div class="grid grid-cols-2 gap-6 mt-6">
+        {% for attribute in attributes %}
+        <div class="space-y-2">
+            <label class="text-sm font-bold text-primary/70">{{ attribute.name }}</label>
+           <select name="attribute_{{ attribute.id }}" class="w-full px-4 py-3 rounded-xl border-primary/10 focus:ring-2 focus:ring-primary focus:border-transparent outline-none">
+                <option value="">Select {{ attribute.name }}</option>
+                {% for option in attribute.options.all %}
+                    <option value="{{ option.id }}">{{ option.value }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endfor %}
+    </div>
+
 <div class="flex items-center justify-between pt-4">
 <button class="px-8 py-3 rounded-xl font-bold text-primary/40 cursor-not-allowed flex items-center gap-2">
 <span class="material-symbols-outlined">chevron_left</span>
                             Previous Step
                         </button>
-<button class="px-10 py-3 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/20 flex items-center gap-2 hover:opacity-90 transition-all">
-                            Next Step
-                            <span class="material-symbols-outlined">chevron_right</span>
+<button type="submit"
+        class="px-10 py-3 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/20 flex items-center gap-2 hover:opacity-90 transition-all">
+    Next Step
+    <span class="material-symbols-outlined">chevron_right</span>
 </button>
 </div>
 </div>
@@ -233,5 +305,5 @@
 </div>
 </main>
 </div>
-
+</form>
 </body></html>

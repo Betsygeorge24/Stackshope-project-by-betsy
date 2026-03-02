@@ -43,7 +43,7 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #ACBAC4; border-radius: 10px; }
     </style>
 </head>
-<body class="bg-workspace-nude dark:bg-background-dark text-slate-900 dark:text-gray-100 min-h-screen flex overflow-hidden">
+<body class="bg-workspace-nude dark:bg-background-dark text-slate-900 dark:text-gray-100 min-h-screen flex">
 <!-- Sidebar -->
 <aside class="w-64 bg-sidebar-navy text-white flex flex-col flex-shrink-0">
 <div class="p-8 flex items-center space-x-3">
@@ -57,7 +57,7 @@
 <span class="material-icons mr-3 opacity-90">dashboard</span>
                 Dashboard
             </a>
-<a class="flex items-center px-4 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors" href="#">
+<a class="flex items-center px-4 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors" href="{% url 'add-product' %}">
 <span class="material-icons mr-3 opacity-70">inventory_2</span>
                 My Products
             </a>
@@ -73,6 +73,10 @@
 <a class="flex items-center px-4 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors" href="#">
 <span class="material-icons mr-3 opacity-70">payments</span>
                 Payments
+            </a>
+<a class="flex items-center px-4 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors"  href="{% url 'seller-profile' %}">
+<span class="material-icons mr-3 opacity-70">person_outline</span>
+                Profile
             </a>
 <a class="flex items-center px-4 py-3 text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors" href="#">
 <span class="material-icons mr-3 opacity-70">settings</span>
@@ -100,7 +104,12 @@
 <header class="flex justify-between items-end mb-8">
 <div>
 <h1 class="text-3xl font-extrabold text-sidebar-navy dark:text-white">Seller Overview</h1>
-<p class="text-slate-grey font-medium mt-1">Welcome back, Alex. Here's what's happening with your store today.</p>
+{% if request.user.is_authenticated %}
+<p class="text-slate-grey font-medium mt-1">
+Welcome back, {{ request.user.username }}.👋  
+    Here's what's happening with your store today.
+</p>
+{% endif %}
 </div>
 <div class="flex items-center space-x-3">
 <div class="flex items-center bg-white dark:bg-gray-800 border border-slate-grey/20 rounded-lg px-4 py-2 text-sm text-slate-700 dark:text-gray-300 shadow-sm cursor-pointer">
@@ -280,16 +289,33 @@
 </div>
 </div>
 <!-- Additional Quick Links or Bottom Widgets -->
-<div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8 pb-8">
-<div class="bg-sidebar-navy text-white p-8 rounded-xl flex items-center justify-between overflow-hidden relative group">
-<div class="relative z-10">
-<h4 class="text-xl font-bold mb-2">Want to boost sales?</h4>
-<p class="text-gray-400 text-sm max-w-xs mb-6">Create a promotion or a flash sale to attract more customers to your store.</p>
-<button class="bg-primary hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-all">Create Campaign</button>
-</div>
-<div class="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform">
-<span class="material-icons text-[180px]">campaign</span>
-</div>
+<h2 class="text-2xl font-bold mb-4">Your Products</h2>
+<div class="grid grid-cols-3 gap-6">
+    {% for product in products %}
+    <div class="bg-white rounded-xl p-4 shadow">
+        <!-- Product image -->
+        {% with variant=product.variants.first %}
+            {% if variant.images.first %}
+                <img src="{{ variant.images.first.image_url.url }}" alt="{{ product.name }}" class="w-full h-40 object-cover rounded-lg mb-2">
+            {% else %}
+                <div class="w-full h-40 bg-gray-200 flex items-center justify-center rounded-lg mb-2">
+                    <span class="text-gray-400">No Image</span>
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <h3 class="text-lg font-bold">{{ product.name }}</h3>
+        <p class="text-sm text-gray-500">{{ product.subcategory.name }}</p>
+        <p class="text-sm text-gray-500">{{ product.brand }}</p>
+
+        {% with variant=product.variants.first %}
+            <p class="text-sm text-gray-700 mt-2">Price: ₹{{ variant.selling_price|default:0 }}</p>
+            <p class="text-sm text-gray-700">Stock: {{ variant.stock_quantity|default:0 }}</p>
+        {% endwith %}
+    </div>
+    {% empty %}
+    <p>No products added yet.</p>
+    {% endfor %}
 </div>
 <div class="bg-white dark:bg-gray-800 p-8 rounded-xl border border-slate-grey/20 flex flex-col justify-between">
 <div>

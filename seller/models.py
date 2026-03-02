@@ -1,5 +1,5 @@
 from django.db import models
-from core.models import CustomUser,SubCategory
+from core.models import CustomUser,SubCategory,Category
 from django.utils.text import slugify
 import uuid
 
@@ -67,7 +67,7 @@ class ProductVariant(models.Model):
         if not self.sku_code:
             sku = self.generate_sku()
 
-            # handle duplicates
+           
             while ProductVariant.objects.filter(sku_code=sku).exists():
                 sku = self.generate_sku()
 
