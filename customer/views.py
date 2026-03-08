@@ -142,7 +142,6 @@ def add_to_cart_view(request, id):
     product_variant = get_object_or_404(ProductVariant, id=id)
     cart, _ = Cart.objects.get_or_create(user=user)
     
-    # Get quantity from form submission (default to 1)
     try:
         quantity = int(request.POST.get("quantity", 1))
         if quantity < 1:
@@ -411,6 +410,7 @@ def product_single_view(request, id):
         .prefetch_related("images")
         .get(id=id)
     )
+    category=Category.objects.filter()
     cart = Cart.objects.filter(user=request.user).first()
     cart_items = CartItem.objects.filter(cart=cart).prefetch_related(
         "variant__product__subcategory", "variant__images"
@@ -437,7 +437,8 @@ def product_single_view(request, id):
             "cart_items": cart_items,
             "wishlist_variant_ids": wishlist_variant_ids,
             "cart_variant_ids": cart_variant_ids,
-        },
+            'category':category
+        }
     )
 
 

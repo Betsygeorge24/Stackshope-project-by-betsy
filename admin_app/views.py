@@ -36,3 +36,5 @@ def product_verification(request, id):
         return redirect("admin_dashboard")
     context = {"product": product}
     return render(request, "admin_templates/product_verification.html", context)
+
+
