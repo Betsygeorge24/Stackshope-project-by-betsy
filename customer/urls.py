@@ -40,4 +40,8 @@ urlpatterns = [
     # order history and address----------------------
     path('order-history/',views.orderhistory_view,name='order-history'),
     #------------------------------------------------------------
+    # payment processing and success----------------------
+    path("payment-success/",views.payment_success,name="payment_success"),
+    path("order-success/",views.order_success,name="order_success"),
+    #------------------------------------------------------------
 ]

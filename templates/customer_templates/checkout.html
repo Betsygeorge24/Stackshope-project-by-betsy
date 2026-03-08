@@ -1,0 +1,216 @@
+{% load static %}
+<!DOCTYPE html>
+<html class="light scroll-smooth" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Checkout - StackShop</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <link type="icon/" rel="icon" href="/static/favicon.ico" />
+    <script type="text/javascript" src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        "dark": "#30364F",
+                        "muted": "#ACBAC4",
+                        "accent": "#E1D9BC",
+                        "light": "#F0F0DB",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+
+<body class="bg-light/30 text-dark font-display flex flex-col min-h-screen">
+
+    {% include "customer_templates/Navbar.html" %}
+
+    <main class="max-w-7xl mx-auto w-full px-4 py-8 md:py-12 flex-grow">
+        {% include "core_templates/messages.html" %}
+        
+        <div class="mb-8">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-dark tracking-tight">Checkout</h1>
+            <p class="text-muted font-medium mt-2">Complete your purchase securely</p>
+        </div>
+
+        {% if error %}
+        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-4 rounded-lg mb-6">
+            <strong>Error:</strong> {{ error }}
+        </div>
+        {% endif %}
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Order Summary -->
+            <div class="lg:col-span-2">
+                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-muted/30">
+                    <h2 class="text-xl font-extrabold text-dark mb-6 border-b border-muted/30 pb-4">Order Summary</h2>
+                    
+                    <div class="space-y-4 mb-6">
+                        {% for item in cart_items %}
+                        <div class="flex items-center justify-between py-3 border-b border-muted/20">
+                            <div class="flex items-center gap-4 flex-1">
+                                <div class="w-16 h-16 bg-light rounded-lg overflow-hidden flex-shrink-0">
+                                    {% if item.variant.images.first.image_url %}
+                                        <img src="{{ item.variant.images.first.image_url.url }}" alt="{{ item.variant.product.name }}" class="w-full h-full object-cover">
+                                    {% else %}
+                                        <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&q=80&w=100" alt="Placeholder" class="w-full h-full object-cover">
+                                    {% endif %}
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="font-bold text-dark">{{ item.variant.product.name }}</h3>
+                                    <p class="text-sm text-muted">₹{{ item.price_at_time }} × {{ item.quantity }}</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-extrabold text-dark">₹{{ item.get_total }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Section -->
+            <div class="lg:col-span-1">
+                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-muted/30 sticky top-28">
+                    <h2 class="text-xl font-extrabold text-dark mb-6 border-b border-muted/30 pb-4">Price Details</h2>
+                    
+                    <div class="space-y-4 mb-6">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-muted font-bold">Subtotal</span>
+                            <span class="text-dark font-extrabold">₹{{ cart_total|floatformat:2 }}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-muted font-bold">Tax (18%)</span>
+                            <span class="text-dark font-extrabold">₹{{ tax_amount|floatformat:2 }}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-muted font-bold">Shipping</span>
+                            <span class="text-green-600 font-extrabold">Free</span>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-muted/30 pt-4 mb-8">
+                        <div class="flex justify-between items-center">
+                            <span class="text-base font-bold text-dark uppercase tracking-wide">Total</span>
+                            <span class="text-2xl font-black text-dark">₹{{ total_amount|floatformat:2 }}</span>
+                        </div>
+                    </div>
+
+                    {% if payment %}
+                    <button id="rzp-button-id" class="w-full bg-dark hover:bg-opacity-90 text-light text-center py-4 rounded-xl font-bold text-sm uppercase tracking-widest transition-all shadow-lg shadow-dark/20 flex items-center justify-center gap-2">
+                        Pay Now <span class="material-icons text-[18px]">lock</span>
+                    </button>
+                    {% else %}
+                    <button disabled class="w-full bg-muted text-light text-center py-4 rounded-xl font-bold text-sm uppercase tracking-widest cursor-not-allowed">
+                        Loading Payment...
+                    </button>
+                    {% endif %}
+                    
+                    <div class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <p class="text-xs text-blue-700 font-bold mb-3">🧪 TEST MODE - Multiple Payment Options:</p>
+                        
+                        <div class="space-y-2">
+                            <div class="text-xs text-blue-700">
+                                <span class="font-bold">💳 Card:</span>
+                                <code class="bg-white px-2 py-1 rounded">4111 1111 1111 1111</code>
+                                <br/><span class="text-[10px]">Expiry: Any future date | CVV: Any 3 digits</span>
+                            </div>
+                            <div class="text-xs text-blue-700">
+                                <span class="font-bold">📱 UPI:</span> Use any test UPI ID
+                                <br/><span class="text-[10px]">Example: success@razorpay</span>
+                            </div>
+                            <div class="text-xs text-blue-700">
+                                <span class="font-bold">🏦 Net Banking:</span> Select any test bank
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 flex items-center justify-center gap-2 text-muted text-xs font-bold">
+                        <span class="material-icons text-[14px]">verified_user</span> Secure SSL Checkout
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    {% include "customer_templates/Footer.html" %}
+
+    <script>
+        {% if payment %}
+        var options = {
+            "key": "{{ razorpay_key }}",
+            "amount": "{{ payment.amount }}",
+            "currency": "INR",
+            "name": "StackShop",
+            "description": "Purchase from StackShop",
+            "order_id": "{{ payment.id }}",
+            
+            // Explicitly enable payment methods
+            "method": {
+                "upi": true,
+                "card": true,
+                "netbanking": true,
+                "wallet": true
+            },
+            
+            "handler": function (response) {
+                fetch("/payment-success/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    },
+                    body: JSON.stringify({
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_signature: response.razorpay_signature
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === "payment verified") {
+                        window.location.href = "/order-success/";
+                    } else {
+                        alert("Payment verification failed. Please try again.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    alert("An error occurred. Please try again.");
+                });
+            },
+            "prefill": {
+                "name": "{{ user.first_name }} {{ user.last_name }}",
+                "email": "{{ user.email }}",
+                "contact": "{{ user.phone_number }}"
+            },
+            "theme": {
+                "color": "#30364F"
+            }
+        };
+
+        var rzp = new Razorpay(options);
+        document.getElementById("rzp-button-id").onclick = function (e) {
+            e.preventDefault();
+            rzp.open();
+        }
+        {% endif %}
+    </script>
+
+</body>
+
+</html>
