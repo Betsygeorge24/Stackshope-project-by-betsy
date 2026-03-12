@@ -1,4 +1,4 @@
-from django.shortcuts import render,redirect
+from django.shortcuts import render,redirect, get_object_or_404, redirect
 from core.decorators import seller_required
 from django.contrib.auth.decorators import login_required
 from .models import SellerProfile,Product,SubCategory,Attribute,VariantAttributeBridge,ProductVariant,ProductImage
@@ -143,15 +143,41 @@ def delete_product(request, product_id):
     return redirect("dashboard")
 
 
+
+
 def seller_customers(request):
 
     seller = request.user.seller_profile
 
-    customers = OrderItem.objects.filter(seller=seller)
+    customers = OrderItem.objects.filter(seller=seller).select_related("order__user")
+
+    
+    for customer in customers:
+        customer.default_address = customer.order.user.addresses.filter(is_default=True).first()
+    total_customers = customers.values("order__user").distinct().count()
+    delivered_orders = customers.filter(status="delivered").count()
+    revenue = customers.filter(status="delivered").aggregate(
+        total=Sum("price_at_purchase")
+    )["total"] or 0
 
     context = {
-        "customers": customers
+        "customers": customers,
+        "total_customers": total_customers,
+        "delivered_orders": delivered_orders,
+        "revenue": revenue
     }
 
     return render(request, "seller_templates/customerdetailforseller.html", context)
+def update_item_status(request, item_id):
+
+    if request.method == "POST":
+
+        item = get_object_or_404(OrderItem, id=item_id)
+
+        new_status = request.POST.get("status")
+
+        item.status = new_status
+        item.save()
+
+    return redirect("seller_customers")
 

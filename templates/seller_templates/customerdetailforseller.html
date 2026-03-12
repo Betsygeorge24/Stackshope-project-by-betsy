@@ -156,16 +156,23 @@
 </div>
 </div>
 </td>
-<td class="px-6 py-4 text-sm font-medium text-primary/80">
-{% for address in customer.order.user.addresses.all %}
-    {% if address.is_default %}
-        {{ address.city }}, {{ address.state }}, {{ address.pincode }}
-    {% endif %}
-{% empty %}
-    No address
-{% endfor %}
-</td>
+<td>
 
+{% if customer.default_address %}
+
+{{ customer.default_address.house_info }},
+{{ customer.default_address.locality }},
+{{ customer.default_address.city }},
+{{ customer.default_address.state }} -
+{{ customer.default_address.pincode }}
+
+{% else %}
+
+No Address
+
+{% endif %}
+
+</td>
 <td class="px-6 py-4 text-sm font-medium text-primary/80">
 {{ customer.quantity }} items purchased</td>
 
@@ -177,15 +184,34 @@
 {{ customer.order.ordered_at|date:"M d, Y" }}
 </td>
 <td class="px-6 py-4 text-sm font-semibold text-primary">
-{{ customer.order.order_status }}
-</td>
+{{ customer.status }}</td>
 <td class="px-6 py-4 text-sm font-semibold text-primary">
 {{ customer.order.payment_status }}
 </td>
 <td class="px-6 py-4 text-right">
-<button class="bg-primary/5 hover:bg-primary text-primary hover:text-white px-4 py-2 rounded-lg font-bold text-xs">
-Contact
+
+<form method="POST" action="{% url 'update_item_status' customer.id %}">
+{% csrf_token %}
+
+<select name="status"
+class="px-3 py-2 border border-primary/10 rounded-lg text-sm">
+
+{% for key,value in customer.STATUS_CHOICES %}
+<option value="{{ key }}"
+{% if customer.status == key %}selected{% endif %}>
+{{ value }}
+</option>
+{% endfor %}
+
+</select>
+
+<button type="submit"
+class="ml-2 bg-primary text-white px-3 py-1 rounded-lg text-xs">
+Update
 </button>
+
+</form>
+
 </td>
 
 </tr>
@@ -212,35 +238,57 @@ Contact
 </div>
 </div>
 <div class="mt-8 grid grid-cols-3 gap-6">
+
+<!-- Total Customers -->
 <div class="p-6 bg-white rounded-2xl border border-primary/5 shadow-sm">
 <div class="flex items-center justify-between mb-2">
 <span class="text-sm font-bold text-primary/60">Total Customers</span>
 <span class="material-icons text-primary/20">groups</span>
 </div>
-<div class="text-2xl font-extrabold text-primary">1,248</div>
-<div class="mt-2 text-xs font-bold text-emerald-600 flex items-center gap-1">
-<span class="material-icons text-xs">trending_up</span>
-                        +5.2% from last month
-                    </div>
+
+<div class="text-2xl font-extrabold text-primary">
+{{ total_customers }}
 </div>
+
+<div class="mt-2 text-xs font-bold text-primary/40">
+Total unique customers
+</div>
+</div>
+
+
+<!-- Delivered Orders -->
 <div class="p-6 bg-white rounded-2xl border border-primary/5 shadow-sm">
 <div class="flex items-center justify-between mb-2">
-<span class="text-sm font-bold text-primary/60">Average LTV</span>
+<span class="text-sm font-bold text-primary/60">Delivered Orders</span>
+<span class="material-icons text-primary/20">shopping_bag</span>
+</div>
+
+<div class="text-2xl font-extrabold text-primary">
+{{ delivered_orders }}
+</div>
+
+<div class="mt-2 text-xs font-bold text-primary/40">
+Orders successfully delivered
+</div>
+</div>
+
+
+<!-- Revenue -->
+<div class="p-6 bg-white rounded-2xl border border-primary/5 shadow-sm">
+<div class="flex items-center justify-between mb-2">
+<span class="text-sm font-bold text-primary/60">Total Revenue</span>
 <span class="material-icons text-primary/20">monetization_on</span>
 </div>
-<div class="text-2xl font-extrabold text-primary">$342.50</div>
-<div class="mt-2 text-xs font-bold text-primary/40">Lifetime Value per customer</div>
+
+<div class="text-2xl font-extrabold text-primary">
+₹{{ revenue }}
 </div>
-<div class="p-6 bg-white rounded-2xl border border-primary/5 shadow-sm">
-<div class="flex items-center justify-between mb-2">
-<span class="text-sm font-bold text-primary/60">Retention Rate</span>
-<span class="material-icons text-primary/20">cached</span>
+
+<div class="mt-2 text-xs font-bold text-primary/40">
+Revenue from delivered orders
 </div>
-<div class="text-2xl font-extrabold text-primary">78%</div>
-<div class="mt-2 text-xs font-bold text-emerald-600 flex items-center gap-1">
-<span class="material-icons text-xs">trending_up</span>
-                        Improving trend
-                    </div>
+</div>
+
 </div>
 </div>
 </section>
