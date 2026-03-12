@@ -336,11 +336,22 @@ def checkout_view(request):
         "variant__product__subcategory", "variant__images"
     )
 
+    # Get user's addresses
+    user_addresses = Address.objects.filter(user=request.user).order_by('-is_default', '-created_at')
+    default_address = user_addresses.filter(is_default=True).first()
+
     cart_total = sum(item.get_total() for item in cart_items)
     tax_amount = cart_total * 0.18
     total_amount = cart_total + tax_amount
 
     amount_in_paise = int(total_amount * 100)
+
+    # Get selected address ID from POST request or use default
+    selected_address_id = request.POST.get('address_id')
+    if selected_address_id:
+        selected_address = user_addresses.filter(id=selected_address_id).first()
+    else:
+        selected_address = default_address
 
     try:
         client = razorpay.Client(
@@ -358,6 +369,7 @@ def checkout_view(request):
 
         order_obj = Order.objects.create(
             user=request.user,
+            address=selected_address,
             order_number=f"ORD-{request.user.id}-{int(time.time())}",
             total_amount=total_amount,
             payment_status="PENDING",
@@ -379,6 +391,9 @@ def checkout_view(request):
             "total_amount": total_amount,
             "payment": payment,
             "razorpay_key": settings.RAZORPAY_KEY_ID,
+            "user_addresses": user_addresses,
+            "default_address": default_address,
+            "selected_address": selected_address,
         }
     except Exception as e:
         messages.error(request, f"Payment initialization failed: {str(e)}")
@@ -388,6 +403,9 @@ def checkout_view(request):
             "tax_amount": tax_amount,
             "total_amount": total_amount,
             "error": str(e),
+            "user_addresses": user_addresses,
+            "default_address": default_address,
+            "selected_address": selected_address,
         }
 
     return render(request, "customer_templates/checkout.html", context)

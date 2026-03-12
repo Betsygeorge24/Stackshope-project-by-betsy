@@ -45,6 +45,7 @@ class Review(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 class Order(models.Model):
     user = models.ForeignKey("core.CustomUser", on_delete=models.CASCADE, related_name="orders")
+    address = models.ForeignKey("core.Address", on_delete=models.SET_NULL, null=True, blank=True, related_name="orders")
     order_number = models.CharField(max_length=100, unique=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     payment_status = models.CharField(max_length=20)
