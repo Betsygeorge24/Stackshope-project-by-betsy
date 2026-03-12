@@ -43,6 +43,14 @@
             color: #30364F;
             font-weight: bold;
         }
+
+        .active-filter {
+            box-shadow: 0 4px 6px rgba(48, 54, 79, 0.1);
+        }
+
+        .product-row {
+            transition: all 0.3s ease;
+        }
     </style>
 </head>
 
@@ -96,13 +104,11 @@
             
             <section id="content-sellers" class="page-content block">
 
-                <div class="flex items-center gap-4 mb-6">
-                    <button class="bg-dark text-light px-5 py-2 rounded-lg text-xs font-bold shadow-sm">All
-                        Sellers</button>
-                    <button class="bg-yellow-100 text-yellow-700 px-5 py-2 rounded-lg text-xs font-bold">Pending
-                        Review</button>
-                    <button class="bg-green-100 text-green-700 px-5 py-2 rounded-lg text-xs font-bold">Approved</button>
-                    <button class="bg-red-100 text-red-700 px-5 py-2 rounded-lg text-xs font-bold">Rejected</button>
+                <div class="flex items-center gap-3 mb-6">
+                    <button onclick="filterSellers('all')" class="seller-filter-btn active-filter bg-dark text-light px-5 py-2 rounded-lg text-xs font-bold shadow-sm transition-all" data-filter="all">All Sellers</button>
+                    <button onclick="filterSellers('pending')" class="seller-filter-btn bg-yellow-100 text-yellow-700 px-5 py-2 rounded-lg text-xs font-bold transition-all hover:shadow-md" data-filter="pending">Pending Review</button>
+                    <button onclick="filterSellers('approved')" class="seller-filter-btn bg-green-100 text-green-700 px-5 py-2 rounded-lg text-xs font-bold transition-all hover:shadow-md" data-filter="approved">Approved</button>
+                    <button onclick="filterSellers('rejected')" class="seller-filter-btn bg-red-100 text-red-700 px-5 py-2 rounded-lg text-xs font-bold transition-all hover:shadow-md" data-filter="rejected">Rejected</button>
                 </div>
                 <div class="bg-white border border-muted/30 rounded-2xl shadow-sm overflow-hidden">
                     <table class="w-full text-left border-collapse">
@@ -116,9 +122,9 @@
                                 <th class="p-4 font-black text-right">Action</th>
                             </tr>
                         </thead>
-                        <tbody class="text-sm font-medium">
+                        <tbody class="text-sm font-medium" id="sellers-tbody">
                             {% for seller in sellers %}
-                            <tr class="border-b border-muted/10 hover:bg-light/30 transition-colors">
+                            <tr class="seller-row border-b border-muted/10 hover:bg-light/30 transition-colors" data-status="{{ seller.verification_status|lower }}" data-store-name="{{ seller.store_name|lower }}">
 
                                 <td class="p-4">
                                     <p class="font-bold text-dark text-base">{{ seller.store_name|default:"Unnamed Store" }}</p>
@@ -161,31 +167,31 @@
                                 </td>
 
                                 <td class="p-4 text-right">
-                                    {% if seller.verification_status == 'pending' %}
-                                    <form action="{% url 'sellerverification' seller.id %}" method="GET" style="display: inline;">
-                                        <button type="submit"
-                                            class="text-xs font-bold bg-dark text-light px-4 py-2 rounded-lg hover:bg-accent hover:text-dark transition-colors shadow-sm">
-                                            Review
-                                        </button>
-                                    </form>
-                                    {% else %}
-                                    <form action="{% url 'sellerverification' seller.id %}" method="GET" style="display: inline;">
-                                        <button type="submit"
-                                            class="text-xs font-bold border border-muted text-muted px-4 py-2 rounded-lg hover:text-dark hover:border-dark transition-colors">
-                                            Edit Remarks
-                                        </button>
-                                    </form>
+                                    {% if seller.verification_status|lower == 'pending' %}
+                                    <button type="button" onclick="openSellerVerificationModal({{ seller.id }}, '{{ seller.store_name }}')"
+                                        class="text-xs font-bold bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors shadow-sm">
+                                        Review
+                                    </button>
+                                    {% elif seller.verification_status|lower == 'approved' %}
+                                    <button type="button" onclick="openSellerVerificationModal({{ seller.id }}, '{{ seller.store_name }}')"
+                                        class="text-xs font-bold border border-green-500 text-green-600 px-4 py-2 rounded-lg hover:bg-green-50 transition-colors">
+                                        Edit Remarks
+                                    </button>
+                                    {% elif seller.verification_status|lower == 'rejected' %}
+                                    <button type="button" onclick="openSellerVerificationModal({{ seller.id }}, '{{ seller.store_name }}')"
+                                        class="text-xs font-bold border border-red-500 text-red-600 px-4 py-2 rounded-lg hover:bg-red-50 transition-colors">
+                                        Edit Remarks
+                                    </button>
                                     {% endif %}
                                 </td>
 
                             </tr>
                             {% empty %}
-                            <tr>
+                            <tr id="sellers-empty-state">
                                 <td colspan="5" class="p-12 text-center text-muted">
-                                    <span class="material-icons text-5xl mb-3 opacity-50">store_off</span>
+                                    <span class="material-icons text-5xl mb-3 opacity-50 block">store_off</span>
                                     <p class="font-extrabold text-dark text-lg">No sellers found</p>
-                                    <p class="text-sm font-medium">There are currently no sellers matching your
-                                        criteria.</p>
+                                    <p class="text-sm font-medium">There are currently no sellers matching your criteria.</p>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -197,13 +203,21 @@
             <section id="content-products" class="page-content hidden">
 
                 <div class="flex items-center justify-between mb-6">
-                    <div class="flex items-center gap-4">
-                        <button class="bg-dark text-light px-5 py-2 rounded-lg text-xs font-bold shadow-sm">All
-                            Products</button>
-                        <button class="bg-yellow-100 text-yellow-700 px-5 py-2 rounded-lg text-xs font-bold">Needs
-                            Verification</button>
+                    <div class="flex items-center gap-3">
+                        <button onclick="filterProducts('all')" class="product-filter-btn active-filter bg-dark text-light px-5 py-2 rounded-lg text-xs font-bold shadow-sm transition-all" data-filter="all">
+                            All Products
+                        </button>
+                        <button onclick="filterProducts('pending')" class="product-filter-btn bg-yellow-100 text-yellow-700 px-5 py-2 rounded-lg text-xs font-bold transition-all hover:shadow-md" data-filter="pending">
+                            Pending Review
+                        </button>
+                        <button onclick="filterProducts('approved')" class="product-filter-btn bg-green-100 text-green-700 px-5 py-2 rounded-lg text-xs font-bold transition-all hover:shadow-md" data-filter="approved">
+                            Approved
+                        </button>
+                        <button onclick="filterProducts('rejected')" class="product-filter-btn bg-red-100 text-red-700 px-5 py-2 rounded-lg text-xs font-bold transition-all hover:shadow-md" data-filter="rejected">
+                            Rejected
+                        </button>
                     </div>
-                    <input type="text" placeholder="Search products..."
+                    <input type="text" id="productSearch" placeholder="Search products..."
                         class="border border-muted/50 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-dark">
                 </div>
 
@@ -219,9 +233,9 @@
                                 <th class="p-4 font-black text-right">Action</th>
                             </tr>
                         </thead>
-                        <tbody class="text-sm font-medium">
+                        <tbody class="text-sm font-medium" id="products-tbody">
                             {% for product in products %}
-                            <tr class="border-b border-muted/10 hover:bg-light/30 transition-colors">
+                            <tr class="product-row border-b border-muted/10 hover:bg-light/30 transition-colors" data-status="{{ product.product.approval_status|lower }}" data-product-name="{{ product.product.name|lower }}">
 
                                 <td class="p-4 flex items-center gap-3">
                                     <div
@@ -258,38 +272,36 @@
 
                                 <td class="p-4">
                                     {% if product.product.approval_status == 'approved' %}
-                                    <span
-                                        class="bg-green-100 text-green-700 px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-widest">
+                                    <span class="bg-green-100 text-green-700 px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-widest">
                                         Approved
                                     </span>
                                     {% elif product.product.approval_status == 'rejected' %}
-                                    <span
-                                        class="bg-red-100 text-red-700 px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-widest">
+                                    <span class="bg-red-100 text-red-700 px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-widest">
                                         Rejected
                                     </span>
-                                    {% elif product.product.approval_status == 'PENDING' %}
-                                    <span
-                                        class="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-widest">
-                                        Pending
+                                    {% else %}
+                                    <span class="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-widest">
+                                        Pending Review
                                     </span>
                                     {% endif %}
                                 </td>
 
                                 <td class="p-4 text-right">
-                                    {% if product.product.approval_status == 'PENDING' %}
-                                    <form action="{% url 'productverification' product.product.id %}" method="GET" style="display: inline;">
-                                        <button type="submit"
-                                            class="text-xs font-bold bg-dark text-light px-4 py-2 rounded-lg hover:bg-accent hover:text-dark transition-colors shadow-sm">
-                                            Verify
-                                        </button>
-                                    </form>
-                                    {% else %}
-                                    <form action="{% url 'productverification' product.product.id %}" method="GET" style="display: inline;">
-                                        <button type="submit"
-                                            class="text-xs font-bold border border-muted text-muted px-4 py-2 rounded-lg hover:text-dark hover:border-dark transition-colors">
-                                            Edit Remarks
-                                        </button>
-                                    </form>
+                                    {% if product.product.approval_status|lower == 'pending' %}
+                                    <button type="button" onclick="openProductVerificationModal({{ product.id }}, '{{ product.product.name }}')"
+                                        class="text-xs font-bold bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors shadow-sm">
+                                        Verify
+                                    </button>
+                                    {% elif product.product.approval_status|lower == 'approved' %}
+                                    <button type="button" onclick="openProductVerificationModal({{ product.id }}, '{{ product.product.name }}')"
+                                        class="text-xs font-bold border border-green-500 text-green-600 px-4 py-2 rounded-lg hover:bg-green-50 transition-colors">
+                                        Edit Remarks
+                                    </button>
+                                    {% elif product.product.approval_status|lower == 'rejected' %}
+                                    <button type="button" onclick="openProductVerificationModal({{ product.id }}, '{{ product.product.name }}')"
+                                        class="text-xs font-bold border border-red-500 text-red-600 px-4 py-2 rounded-lg hover:bg-red-50 transition-colors">
+                                        Edit Remarks
+                                    </button>
                                     {% endif %}
                                 </td>
 
@@ -311,34 +323,85 @@
 
             <section id="content-marketing" class="page-content hidden">
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
+                    <!-- Product Attributes Card -->
                     <div class="bg-white rounded-2xl border border-muted/30 shadow-sm p-6">
                         <div class="flex items-center gap-2 mb-6 border-b border-muted/20 pb-4">
                             <span class="material-icons text-accent">category</span>
                             <h3 class="font-extrabold text-dark text-lg">Product Attributes</h3>
                         </div>
-                        <form class="space-y-4">
-                            {% csrf_token%}
+                        <form id="attribute-form" class="space-y-4">
+                            {% csrf_token %}
                             <div>
-                                <label
-                                    class="block text-[10px] font-black text-dark uppercase tracking-widest mb-2">Attribute
-                                    Name</label>
-                                <input type="text" placeholder="e.g., Color, Size, Material"
-                                    class="w-full px-4 py-2.5 border border-muted/50 rounded-xl text-sm focus:outline-none focus:border-dark">
+                                <label class="block text-[10px] font-black text-dark uppercase tracking-widest mb-2">
+                                    Attribute Name
+                                </label>
+                                <input type="text" id="id_name" name="name" placeholder="e.g., Color, Size, Material" 
+                                    class="w-full px-4 py-2.5 border border-muted/50 rounded-xl text-sm focus:outline-none focus:border-dark"
+                                    required>
                             </div>
                             <div>
-                                <label
-                                    class="block text-[10px] font-black text-dark uppercase tracking-widest mb-2">Values
-                                    (Comma Separated)</label>
-                                <textarea rows="3" placeholder="Red, Blue, Green"
-                                    class="w-full px-4 py-2.5 border border-muted/50 rounded-xl text-sm focus:outline-none focus:border-dark resize-none"></textarea>
+                                <label class="block text-[10px] font-black text-dark uppercase tracking-widest mb-2">
+                                    Subcategory (Optional)
+                                </label>
+                                <select id="id_subcategory" name="subcategory" 
+                                    class="w-full px-4 py-2.5 border border-muted/50 rounded-xl text-sm focus:outline-none focus:border-dark bg-white">
+                                    <option value="">-- Select Subcategory --</option>
+                                    {% for subcat in subcategories %}
+                                    <option value="{{ subcat.id }}">{{ subcat.name }}</option>
+                                    {% endfor %}
+                                </select>
                             </div>
-                            <button type="button"
-                                class="w-full bg-dark text-light py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-accent hover:text-dark transition-colors">Save
-                                Attribute</button>
+                            <button type="submit" 
+                                class="w-full bg-dark text-light py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-accent hover:text-dark transition-colors">
+                                Save Attribute
+                            </button>
                         </form>
+                        <div id="attribute-message" class="mt-4 hidden p-3 rounded-lg text-sm font-medium"></div>
                     </div>
+
+                    <!-- Attribute Options Card -->
+                    <div class="bg-white rounded-2xl border border-muted/30 shadow-sm p-6">
+                        <div class="flex items-center gap-2 mb-6 border-b border-muted/20 pb-4">
+                            <span class="material-icons text-accent">list_alt</span>
+                            <h3 class="font-extrabold text-dark text-lg">Attribute Options</h3>
+                        </div>
+                        <form id="attribute-option-form" class="space-y-4">
+                            {% csrf_token %}
+                            <div>
+                                <label class="block text-[10px] font-black text-dark uppercase tracking-widest mb-2">
+                                    Select Attribute
+                                </label>
+                                <select id="id_attribute" name="attribute" 
+                                    class="w-full px-4 py-2.5 border border-muted/50 rounded-xl text-sm focus:outline-none focus:border-dark bg-white"
+                                    required>
+                                    <option value="">-- Select Attribute --</option>
+                                    {% for attr in attributes %}
+                                    <option value="{{ attr.id }}">{{ attr.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-black text-dark uppercase tracking-widest mb-2">
+                                    Option Value
+                                </label>
+                                <input type="text" id="id_option_value" name="value" placeholder="e.g., Red, XL, Cotton"
+                                    class="w-full px-4 py-2.5 border border-muted/50 rounded-xl text-sm focus:outline-none focus:border-dark"
+                                    required>
+                            </div>
+                            <button type="submit"
+                                class="w-full bg-dark text-light py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-accent hover:text-dark transition-colors">
+                                Add Option
+                            </button>
+                        </form>
+                        <div id="option-message" class="mt-4 hidden p-3 rounded-lg text-sm font-medium"></div>
+                    </div>
+
+                </div>
+
+                <!-- Ads/Banners and Offers/Coupons Sections -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
 
                     <div class="bg-white rounded-2xl border border-muted/30 shadow-sm p-6">
                         <div class="flex items-center gap-2 mb-6 border-b border-muted/20 pb-4">
@@ -428,6 +491,64 @@
         </div>
     </main>
 
+    <!-- Seller Verification Modal -->
+    <div id="seller-verification-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-lg p-6 max-w-md w-full">
+            <h3 class="text-lg font-black text-dark mb-4">Verify Seller: <span id="seller-name-modal"></span></h3>
+            <form id="seller-verification-form" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" id="seller_id" name="seller_id">
+                <div>
+                    <label class="block text-[10px] font-black text-dark uppercase tracking-widest mb-2">Status</label>
+                    <select name="status" class="w-full px-4 py-2.5 border border-muted/50 rounded-xl text-sm focus:outline-none focus:border-dark bg-white" required>
+                        <option value="">-- Select Status --</option>
+                        <option value="pending">Pending Review</option>
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-dark uppercase tracking-widest mb-2">Remarks (Optional)</label>
+                    <textarea name="remarks" class="w-full px-4 py-2.5 border border-muted/50 rounded-xl text-sm focus:outline-none focus:border-dark resize-none" rows="3" placeholder="Add your remarks here..."></textarea>
+                </div>
+                <div class="flex gap-3">
+                    <button type="button" onclick="closeSellerModal()" class="flex-1 px-4 py-2.5 border border-muted/50 rounded-xl text-sm font-bold text-dark hover:bg-light transition-colors">Cancel</button>
+                    <button type="submit" class="flex-1 px-4 py-2.5 bg-dark text-light rounded-xl text-sm font-bold hover:bg-accent hover:text-dark transition-colors">Submit</button>
+                </div>
+            </form>
+            <div id="seller-modal-message" class="mt-4 hidden p-3 rounded-lg text-sm font-medium"></div>
+        </div>
+    </div>
+
+    <!-- Product Verification Modal -->
+    <div id="product-verification-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-lg p-6 max-w-md w-full">
+            <h3 class="text-lg font-black text-dark mb-4">Verify Product: <span id="product-name-modal"></span></h3>
+            <form id="product-verification-form" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" id="product_id" name="product_id">
+                <div>
+                    <label class="block text-[10px] font-black text-dark uppercase tracking-widest mb-2">Status</label>
+                    <select name="status" class="w-full px-4 py-2.5 border border-muted/50 rounded-xl text-sm focus:outline-none focus:border-dark bg-white" required>
+                        <option value="">-- Select Status --</option>
+                        <option value="pending">Pending Review</option>
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-dark uppercase tracking-widest mb-2">Remarks (Optional)</label>
+                    <textarea name="remarks" class="w-full px-4 py-2.5 border border-muted/50 rounded-xl text-sm focus:outline-none focus:border-dark resize-none" rows="3" placeholder="Add your remarks here..."></textarea>
+                </div>
+                <div class="flex gap-3">
+                    <button type="button" onclick="closeProductModal()" class="flex-1 px-4 py-2.5 border border-muted/50 rounded-xl text-sm font-bold text-dark hover:bg-light transition-colors">Cancel</button>
+                    <button type="submit" class="flex-1 px-4 py-2.5 bg-dark text-light rounded-xl text-sm font-bold hover:bg-accent hover:text-dark transition-colors">Submit</button>
+                </div>
+            </form>
+            <div id="product-modal-message" class="mt-4 hidden p-3 rounded-lg text-sm font-medium"></div>
+        </div>
+    </div>
+
     <script>
         // Tab Switcher Logic
         function switchTab(tabId) {
@@ -454,6 +575,293 @@
             };
             document.getElementById('page-title').innerText = titles[tabId];
         }
+
+        // Product Filtering Logic
+        function filterProducts(filter) {
+            const rows = document.querySelectorAll('.product-row');
+            let visibleCount = 0;
+
+            // Update button active state
+            document.querySelectorAll('.product-filter-btn').forEach(btn => {
+                btn.classList.remove('active-filter', 'bg-dark', 'text-light', 'shadow-md');
+                if (btn.getAttribute('data-filter') === filter) {
+                    btn.classList.add('active-filter', 'bg-dark', 'text-light', 'shadow-md');
+                }
+            });
+
+            // Filter rows based on status
+            rows.forEach(row => {
+                const status = row.getAttribute('data-status');
+                const shouldShow = filter === 'all' || status === filter;
+                
+                if (shouldShow) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Show/hide empty state message
+            const tbody = document.getElementById('products-tbody');
+            const existingEmpty = tbody.querySelector('tr:last-child');
+            
+            if (visibleCount === 0) {
+                // Remove old empty message if exists
+                if (existingEmpty && existingEmpty.innerHTML.includes('No products found')) {
+                    existingEmpty.remove();
+                }
+                
+                let emptyHTML = `
+                    <tr id="empty-state">
+                        <td colspan="5" class="p-12 text-center text-muted">
+                            <span class="material-icons text-5xl mb-3 opacity-50 block">inventory_2</span>
+                            <p class="font-extrabold text-dark text-lg">No products found</p>
+                            <p class="text-sm font-medium">There are currently no products with this status.</p>
+                        </td>
+                    </tr>
+                `;
+                tbody.insertAdjacentHTML('beforeend', emptyHTML);
+            } else {
+                // Remove empty message if products are shown
+                const emptyRow = tbody.querySelector('#empty-state');
+                if (emptyRow) {
+                    emptyRow.remove();
+                }
+            }
+        }
+
+        // ==================== ATTRIBUTE FORM HANDLERS ====================
+
+        // Handle Attribute Form Submission
+        document.getElementById('attribute-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            
+            fetch('{% url "create_attribute" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const messageDiv = document.getElementById('attribute-message');
+                messageDiv.classList.remove('hidden');
+                
+                if (data.status === 'success') {
+                    messageDiv.classList.add('bg-green-100', 'text-green-700');
+                    messageDiv.classList.remove('bg-red-100', 'text-red-700');
+                    messageDiv.innerText = '✓ ' + data.message;
+                    
+                    // Reset form
+                    this.reset();
+                    
+                    // Auto-hide message after 3 seconds
+                    setTimeout(() => {
+                        messageDiv.classList.add('hidden');
+                    }, 3000);
+                } else {
+                    messageDiv.classList.add('bg-red-100', 'text-red-700');
+                    messageDiv.classList.remove('bg-green-100', 'text-green-700');
+                    messageDiv.innerText = '✗ ' + (data.message || 'Error creating attribute');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const messageDiv = document.getElementById('attribute-message');
+                messageDiv.classList.remove('hidden');
+                messageDiv.classList.add('bg-red-100', 'text-red-700');
+                messageDiv.innerText = '✗ Error: ' + error.message;
+            });
+        });
+
+        // Handle Attribute Option Form Submission
+        document.getElementById('attribute-option-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            
+            fetch('{% url "create_attribute_option" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const messageDiv = document.getElementById('option-message');
+                messageDiv.classList.remove('hidden');
+                
+                if (data.status === 'success') {
+                    messageDiv.classList.add('bg-green-100', 'text-green-700');
+                    messageDiv.classList.remove('bg-red-100', 'text-red-700');
+                    messageDiv.innerText = '✓ ' + data.message;
+                    
+                    // Reset form
+                    this.reset();
+                    
+                    // Auto-hide message after 3 seconds
+                    setTimeout(() => {
+                        messageDiv.classList.add('hidden');
+                    }, 3000);
+                } else {
+                    messageDiv.classList.add('bg-red-100', 'text-red-700');
+                    messageDiv.classList.remove('bg-green-100', 'text-green-700');
+                    messageDiv.innerText = '✗ ' + (data.message || 'Error adding option');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const messageDiv = document.getElementById('option-message');
+                messageDiv.classList.remove('hidden');
+                messageDiv.classList.add('bg-red-100', 'text-red-700');
+                messageDiv.innerText = '✗ Error: ' + error.message;
+            });
+        });
+
+        // ==================== SELLER VERIFICATION MODAL ====================
+
+        function openSellerVerificationModal(sellerId, sellerName) {
+            document.getElementById('seller-name-modal').innerText = sellerName;
+            document.getElementById('seller_id').value = sellerId;
+            document.getElementById('seller-verification-modal').classList.remove('hidden');
+        }
+
+        function closeSellerModal() {
+            document.getElementById('seller-verification-modal').classList.add('hidden');
+            document.getElementById('seller-verification-form').reset();
+            document.getElementById('seller-modal-message').classList.add('hidden');
+        }
+
+        // Close modal on background click
+        document.getElementById('seller-verification-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeSellerModal();
+            }
+        });
+
+        // Handle Seller Verification Form Submission
+        document.getElementById('seller-verification-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            
+            fetch('{% url "verify_seller_ajax" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const messageDiv = document.getElementById('seller-modal-message');
+                messageDiv.classList.remove('hidden');
+                
+                if (data.status === 'success') {
+                    messageDiv.classList.add('bg-green-100', 'text-green-700');
+                    messageDiv.classList.remove('bg-red-100', 'text-red-700');
+                    messageDiv.innerText = '✓ ' + data.message;
+                    
+                    setTimeout(() => {
+                        window.location.hash = 'sellers';
+                        location.reload();
+                    }, 1500);
+                } else {
+                    messageDiv.classList.add('bg-red-100', 'text-red-700');
+                    messageDiv.classList.remove('bg-green-100', 'text-green-700');
+                    messageDiv.innerText = '✗ ' + data.message;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const messageDiv = document.getElementById('seller-modal-message');
+                messageDiv.classList.remove('hidden');
+                messageDiv.classList.add('bg-red-100', 'text-red-700');
+                messageDiv.innerText = '✗ Error: ' + error.message;
+            });
+        });
+
+        // ==================== PRODUCT VERIFICATION MODAL ====================
+
+        function openProductVerificationModal(productId, productName) {
+            document.getElementById('product-name-modal').innerText = productName;
+            document.getElementById('product_id').value = productId;
+            document.getElementById('product-verification-modal').classList.remove('hidden');
+        }
+
+        function closeProductModal() {
+            document.getElementById('product-verification-modal').classList.add('hidden');
+            document.getElementById('product-verification-form').reset();
+            document.getElementById('product-modal-message').classList.add('hidden');
+        }
+
+        // Close modal on background click
+        document.getElementById('product-verification-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeProductModal();
+            }
+        });
+
+        // Handle Product Verification Form Submission
+        document.getElementById('product-verification-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            
+            fetch('{% url "verify_product_ajax" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const messageDiv = document.getElementById('product-modal-message');
+                messageDiv.classList.remove('hidden');
+                
+                if (data.status === 'success') {
+                    messageDiv.classList.add('bg-green-100', 'text-green-700');
+                    messageDiv.classList.remove('bg-red-100', 'text-red-700');
+                    messageDiv.innerText = '✓ ' + data.message;
+                    
+                    setTimeout(() => {
+                        window.location.hash = 'products';
+                        location.reload();
+                    }, 1500);
+                } else {
+                    messageDiv.classList.add('bg-red-100', 'text-red-700');
+                    messageDiv.classList.remove('bg-green-100', 'text-green-700');
+                    messageDiv.innerText = '✗ ' + data.message;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const messageDiv = document.getElementById('product-modal-message');
+                messageDiv.classList.remove('hidden');
+                messageDiv.classList.add('bg-red-100', 'text-red-700');
+                messageDiv.innerText = '✗ Error: ' + error.message;
+            });
+        });
+
+        // ==================== PAGE LOAD TAB DETECTION ====================
+
+        // On page load, check if there's a hash to switch to a specific tab
+        window.addEventListener('load', function() {
+            const hash = window.location.hash.substring(1); // Remove the # symbol
+            if (hash && ['sellers', 'products', 'marketing'].includes(hash)) {
+                switchTab(hash);
+            }
+        });
     </script>
 </body>
 

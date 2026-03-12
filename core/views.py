@@ -16,7 +16,7 @@ def home_view(request):
     product_var = (
         ProductVariant.objects.select_related("product__subcategory__category")
         .prefetch_related("images")
-        .all()
+        .filter(product__approval_status="approved")
     )
 
     if user.is_authenticated:
@@ -53,6 +53,7 @@ def search_and_filter_view(request):
 
     if query:
         product_var = ProductVariant.objects.filter(
+            product__approval_status="approved").filter(
             Q(product__name__icontains=query)
             | Q(product__description__icontains=query)
             | Q(product__subcategory__category__name__icontains=query)
@@ -138,7 +139,7 @@ def search_and_filter_view(request):
 def category_list_view(request):
     categories = Category.objects.filter(is_active=True).prefetch_related(
         "subcategories"
-    )
+    ).filter(subcategories__products__approval_status="approved").distinct()
     context = {"categories": categories}
     return render(request, "core_templates/categories.html", context)
 

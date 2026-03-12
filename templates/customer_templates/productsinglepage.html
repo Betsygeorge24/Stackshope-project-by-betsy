@@ -139,6 +139,15 @@
                             </button>
                         </form>
 
+                        <form action="{% url 'buy_now' variant.id %}" method="POST" class="w-full">
+                            {% csrf_token %}
+                            <input type="hidden" name="quantity" id="buynow-qty" value="1">
+                            <button type="submit" {% if variant.stock_quantity <= 0 %}disabled{% endif %} class="w-full bg-accent text-dark text-sm font-bold rounded-xl h-12 flex items-center justify-center gap-2 hover:bg-dark hover:text-light transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed group">
+                                <span class="material-icons text-[18px] transition-transform group-hover:scale-110">flash_on</span>
+                                {% if variant.stock_quantity <= 0 %}Out of Stock{% else %}Buy Now{% endif %}
+                            </button>
+                        </form>
+
                         <form action="{% url 'addwishlist' variant.id %}" method="POST" class="w-full">
                             {% csrf_token %}
                             <button type="submit" 
@@ -378,9 +387,11 @@
 
         function updateQty(change) {
             const input = document.getElementById('qty-input');
+            const buynowQty = document.getElementById('buynow-qty');
             let newVal = parseInt(input.value) + change;
             if (newVal >= parseInt(input.min) && newVal <= parseInt(input.max)) {
                 input.value = newVal;
+                buynowQty.value = newVal;
             }
         }
     </script>

@@ -1,48 +1,152 @@
     {% load static%}
-    <footer class="bg-dark text-light pt-16 pb-8 border-t-4 border-accent mt-auto">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
-                <div>
-                    <div class="flex items-center gap-3 mb-6">
-                        <svg class="w-6 h-6 text-accent" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                        </svg>
+    <footer class="bg-dark text-light pt-12 md:pt-20 pb-8 border-t-4 border-accent mt-auto overflow-hidden relative">
+        <!-- Decorative background element -->
+        <div class="absolute inset-0 opacity-5">
+            <div class="absolute top-0 right-0 w-96 h-96 bg-accent rounded-full -translate-y-1/2 translate-x-1/2"></div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
+            <!-- Main Footer Content -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12 mb-12">
+                
+                <!-- Brand Section -->
+                <div class="animate-on-scroll">
+                    <div class="flex items-center gap-3 mb-6 group cursor-pointer">
+                        <div class="w-10 h-10 bg-accent rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                            <svg class="w-6 h-6 text-dark" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                            </svg>
+                        </div>
                         <span class="text-xl font-bold tracking-wide">StackShop</span>
                     </div>
                     <p class="text-muted text-sm leading-relaxed mb-6 font-medium">Elevating your lifestyle through curated collections. Quality is our standard, elegance is our soul.</p>
+                    <div class="flex items-center gap-4">
+                        <a href="#" class="w-10 h-10 bg-light/10 hover:bg-accent hover:text-dark rounded-lg flex items-center justify-center transition-all duration-300 transform hover:scale-110">
+                            <span class="material-icons text-lg">facebook</span>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-light/10 hover:bg-accent hover:text-dark rounded-lg flex items-center justify-center transition-all duration-300 transform hover:scale-110">
+                            <span class="material-icons text-lg">share</span>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-light/10 hover:bg-accent hover:text-dark rounded-lg flex items-center justify-center transition-all duration-300 transform hover:scale-110">
+                            <span class="material-icons text-lg">mail</span>
+                        </a>
+                    </div>
                 </div>
-                <div>
-                    <h4 class="text-sm uppercase tracking-widest font-extrabold mb-6 text-accent">Quick Links</h4>
-                    <ul class="space-y-3 text-muted text-sm font-bold">
-                        <li><a class="hover:text-light transition-colors" href="#">About Us</a></li>
-                        <li><a class="hover:text-light transition-colors" href="#">Our Story</a></li>
-                        <li><a class="hover:text-light transition-colors" href="#">Careers</a></li>
+
+                <!-- Quick Links Section -->
+                <div class="animate-on-scroll">
+                    <h4 class="text-xs uppercase tracking-widest font-extrabold mb-6 text-accent flex items-center gap-2">
+                        <span class="w-2 h-2 bg-accent rounded-full"></span>
+                        Quick Links
+                    </h4>
+                    <ul class="space-y-3 text-muted text-sm">
+                        <li><a class="hover:text-light hover:translate-x-1 transition-all duration-300 inline-flex items-center gap-2 font-semibold" href="#">
+                            <span class="material-icons text-xs">chevron_right</span> About Us
+                        </a></li>
+                        <li><a class="hover:text-light hover:translate-x-1 transition-all duration-300 inline-flex items-center gap-2 font-semibold" href="#">
+                            <span class="material-icons text-xs">chevron_right</span> Our Story
+                        </a></li>
+                        <li><a class="hover:text-light hover:translate-x-1 transition-all duration-300 inline-flex items-center gap-2 font-semibold" href="#">
+                            <span class="material-icons text-xs">chevron_right</span> Careers
+                        </a></li>
+                        <li><a class="hover:text-light hover:translate-x-1 transition-all duration-300 inline-flex items-center gap-2 font-semibold" href="#">
+                            <span class="material-icons text-xs">chevron_right</span> Blog
+                        </a></li>
                     </ul>
                 </div>
-                <div>
-                    <h4 class="text-sm uppercase tracking-widest font-extrabold mb-6 text-accent">Client Services</h4>
-                    <ul class="space-y-3 text-muted text-sm font-bold">
-                        <li><a class="hover:text-light transition-colors" href="#">Contact Us</a></li>
-                        <li><a class="hover:text-light transition-colors" href="#">Shipping & Returns</a></li>
-                        <li><a class="hover:text-light transition-colors" href="#">FAQ</a></li>
+
+                <!-- Client Services Section -->
+                <div class="animate-on-scroll">
+                    <h4 class="text-xs uppercase tracking-widest font-extrabold mb-6 text-accent flex items-center gap-2">
+                        <span class="w-2 h-2 bg-accent rounded-full"></span>
+                        Support
+                    </h4>
+                    <ul class="space-y-3 text-muted text-sm">
+                        <li><a class="hover:text-light hover:translate-x-1 transition-all duration-300 inline-flex items-center gap-2 font-semibold" href="#">
+                            <span class="material-icons text-xs">chevron_right</span> Contact Us
+                        </a></li>
+                        <li><a class="hover:text-light hover:translate-x-1 transition-all duration-300 inline-flex items-center gap-2 font-semibold" href="#">
+                            <span class="material-icons text-xs">chevron_right</span> Shipping Info
+                        </a></li>
+                        <li><a class="hover:text-light hover:translate-x-1 transition-all duration-300 inline-flex items-center gap-2 font-semibold" href="#">
+                            <span class="material-icons text-xs">chevron_right</span> Returns Policy
+                        </a></li>
+                        <li><a class="hover:text-light hover:translate-x-1 transition-all duration-300 inline-flex items-center gap-2 font-semibold" href="#">
+                            <span class="material-icons text-xs">chevron_right</span> FAQ
+                        </a></li>
                     </ul>
                 </div>
-                <div>
-                    <h4 class="text-sm uppercase tracking-widest font-extrabold mb-6 text-accent">Newsletter</h4>
-                    <p class="text-muted text-sm mb-4 font-medium">Subscribe for early access to new drops.</p>
+
+                <!-- Newsletter Section -->
+                <div class="animate-on-scroll">
+                    <h4 class="text-xs uppercase tracking-widest font-extrabold mb-6 text-accent flex items-center gap-2">
+                        <span class="material-icons text-base">mail</span> Newsletter
+                    </h4>
+                    <p class="text-muted text-sm mb-4 font-medium">Subscribe for early access to new drops and exclusive offers.</p>
                     <form class="space-y-3" method="POST" action="#">
                         {% csrf_token %}
-                        <input class="w-full bg-light text-dark border border-muted rounded py-2.5 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent transition-all placeholder-muted" placeholder="Email Address" type="email" required />
-                        <button type="submit" class="w-full bg-accent text-dark py-2.5 rounded font-bold hover:bg-opacity-80 transition-all border border-dark">Join Inner Circle</button>
+                        <div class="relative">
+                            <input class="w-full bg-light/10 text-light border border-muted/30 rounded-lg py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent transition-all placeholder-muted/70" placeholder="your@email.com" type="email" required />
+                            <span class="absolute right-3 top-1/2 -translate-y-1/2 material-icons text-muted cursor-pointer hover:text-accent transition-colors">mail</span>
+                        </div>
+                        <button type="submit" class="w-full bg-accent text-dark py-3 rounded-lg font-bold hover:bg-opacity-80 transition-all active:scale-95 flex items-center justify-center gap-2">
+                            <span>Join Now</span>
+                            <span class="material-icons text-sm">arrow_forward</span>
+                        </button>
                     </form>
                 </div>
             </div>
-            <div class="border-t border-muted/20 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-muted text-xs uppercase font-bold tracking-widest">
-                <p>© 2026 StackShop. All rights reserved.</p>
-                <div class="flex gap-6">
-                    <a class="hover:text-light transition-colors" href="#">Privacy</a>
-                    <a class="hover:text-light transition-colors" href="#">Terms</a>
+
+            <!-- Divider -->
+            <div class="border-t border-muted/20 my-8"></div>
+
+            <!-- Bottom Footer -->
+            <div class="flex flex-col md:flex-row justify-between items-center gap-6 text-muted text-xs uppercase font-bold tracking-widest">
+                <p class="hover:text-light transition-colors">© 2026 StackShop. All rights reserved.</p>
+                <div class="flex gap-8 flex-wrap justify-center md:justify-end">
+                    <a class="hover:text-light transition-colors transform hover:translate-y-[-2px]" href="#">Privacy Policy</a>
+                    <a class="hover:text-light transition-colors transform hover:translate-y-[-2px]" href="#">Terms & Conditions</a>
+                    <a class="hover:text-light transition-colors transform hover:translate-y-[-2px]" href="#">Sitemap</a>
                 </div>
             </div>
+
+            <!-- Back to Top Button -->
+            <button id="back-to-top" class="hidden fixed bottom-8 right-8 w-12 h-12 bg-accent text-dark rounded-full flex items-center justify-center hover:scale-110 transition-transform duration-300 shadow-lg z-50 active:scale-95">
+                <span class="material-icons">expand_less</span>
+            </button>
         </div>
+
+        <style>
+            .animate-on-scroll {
+                animation: fadeInUp 0.6s ease-out forwards;
+                opacity: 0;
+            }
+
+            @media (prefers-reduced-motion: no-preference) {
+                .animate-on-scroll {
+                    animation: fadeInUp 0.6s ease-out forwards;
+                }
+            }
+        </style>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const backToTop = document.getElementById('back-to-top');
+                
+                window.addEventListener('scroll', function() {
+                    if (window.pageYOffset > 300) {
+                        backToTop.classList.remove('hidden');
+                    } else {
+                        backToTop.classList.add('hidden');
+                    }
+                });
+
+                backToTop.addEventListener('click', function() {
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                });
+            });
+        </script>
     </footer>

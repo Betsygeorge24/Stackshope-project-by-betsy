@@ -17,6 +17,7 @@ class SellerProfile(models.Model):
     business_address = models.TextField()
     rating = models.FloatField(default=0)
     verification_status = models.CharField(max_length=10,choices=STATUS_CHOICES,default='pending')
+    admin_remarks = models.TextField(blank=True, null=True, help_text="Admin remarks for seller verification")
     created_at = models.DateTimeField(auto_now_add=True)
     store_image=models.ImageField(upload_to='sellerprofile_image')
     
@@ -59,7 +60,8 @@ class Product(models.Model):
     is_cancellable = models.BooleanField(default=True)
     is_returnable = models.BooleanField(default=True)
     return_days = models.IntegerField(default=7)
-    approval_status = models.CharField(max_length=20, default='pending')
+    approval_status = models.CharField(max_length=20,choices=product_choices,default='pending')
+    admin_remarks = models.TextField(blank=True, null=True, help_text="Admin remarks for product approval/rejection")
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     

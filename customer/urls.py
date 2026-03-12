@@ -9,13 +9,13 @@ urlpatterns = [
 
     # product views----------------------
     path('products/',views.product_list_view,name='product_list'),
-    path('productsingle/<int:id>',views.product_single_view,name='productsingle'),
+    path('productsingle/<int:variant_id>',views.product_single_view,name='productsingle'),
     #------------------------------------------------------------
 
     # for wishlist----------------------
     path('wishlist/',views.wishlist_view,name='wishlist'),
-    path('addwishlist/<int:id>/',views.add_wishlist_view,name='addwishlist'),
-    path('removewishlist/<int:id>/',views.remove_wishlist_view,name='removewishlist'),
+    path('addwishlist/<int:variant_id>/',views.add_wishlist_view,name='addwishlist'),
+    path('removewishlist/<int:wishlist_item_id>/',views.remove_wishlist_view,name='removewishlist'),
     path('createcollection/',views.create_collection_view,name='createcollection'),
     path('updatecollection/', views.update_collection_view, name='updatecollection'),   
     path('deletecollection/<int:wishlist_id>/', views.delete_collection_view, name='deletecollection'), 
@@ -23,9 +23,10 @@ urlpatterns = [
     
     # for cart----------------------
     path('cart/',views.cart_view,name='cart_view'),
-    path('addtocart/<int:id>/',views.add_to_cart_view,name='add_to_cart'),
-    path('removefromcart/<int:id>',views.remove_from_cart_view,name='remove_from_cart'),
-    path('updatecart/<int:id>/',views.update_cart_view,name='update_cart'),
+    path('addtocart/<int:variant_id>/',views.add_to_cart_view,name='add_to_cart'),
+    path('buynow/<int:variant_id>/',views.buy_now_view,name='buy_now'),
+    path('removefromcart/<int:cart_item_id>',views.remove_from_cart_view,name='remove_from_cart'),
+    path('updatecart/<int:cart_item_id>/',views.update_cart_view,name='update_cart'),
     path('checkout/',views.checkout_view,name='checkout'),
     #----------------------------------------------------------------------------
 

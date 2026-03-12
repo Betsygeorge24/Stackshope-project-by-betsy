@@ -132,8 +132,8 @@ def user_profile_view(request):
 
 # wishlist---------------------------------------------------------------------
 @login_required
-def add_wishlist_view(request, id):
-    product_variant = get_object_or_404(ProductVariant, id=id)
+def add_wishlist_view(request, variant_id):
+    product_variant = get_object_or_404(ProductVariant, id=variant_id)
     try:
         wishlist = Wishlist.objects.get(user=request.user, is_default=True)
     except Wishlist.DoesNotExist:
@@ -159,8 +159,8 @@ def add_wishlist_view(request, id):
 
 
 @login_required
-def remove_wishlist_view(request, id):
-    wishlist_item = get_object_or_404(WishlistItem, id=id, wishlist__user=request.user)
+def remove_wishlist_view(request, wishlist_item_id):
+    wishlist_item = get_object_or_404(WishlistItem, id=wishlist_item_id, wishlist__user=request.user)
     wishlist_item.delete()
     messages.success(request, "Product removed from wishlist.")
     return redirect("wishlist")
@@ -236,9 +236,9 @@ def delete_collection_view(request, wishlist_id):
 
 # cart---------------------------------------------------------------------------
 @login_required
-def add_to_cart_view(request, id):
+def add_to_cart_view(request, variant_id):
     user = request.user
-    product_variant = get_object_or_404(ProductVariant, id=id)
+    product_variant = get_object_or_404(ProductVariant, id=variant_id)
     cart, _ = Cart.objects.get_or_create(user=user)
 
     try:
@@ -259,6 +259,34 @@ def add_to_cart_view(request, id):
         cart_item.save()
     messages.success(request, f"{product_variant.product.name} added to cart.")
     return redirect(request.META.get("HTTP_REFERER", "product_list"))
+
+
+@login_required
+def buy_now_view(request, variant_id):
+    """Adds product to cart and redirects directly to checkout"""
+    user = request.user
+    product_variant = get_object_or_404(ProductVariant, id=variant_id)
+    cart, _ = Cart.objects.get_or_create(user=user)
+
+    try:
+        quantity = int(request.POST.get("quantity", 1))
+        if quantity < 1:
+            quantity = 1
+    except (ValueError, TypeError):
+        quantity = 1
+
+    cart_item, created = CartItem.objects.get_or_create(
+        cart=cart,
+        variant=product_variant,
+        defaults={"quantity": quantity, "price_at_time": product_variant.selling_price},
+    )
+    if not created:
+        cart_item.quantity += quantity
+        cart_item.price_at_time = product_variant.selling_price
+        cart_item.save()
+    
+    messages.success(request, f"{product_variant.product.name} added to cart. Proceeding to checkout...")
+    return redirect("checkout")
 
 
 @login_required
@@ -283,9 +311,9 @@ def cart_view(request):
 
 
 @login_required
-def update_cart_view(request, id):
+def update_cart_view(request, cart_item_id):
     if request.method == "POST":
-        cart_item = get_object_or_404(CartItem, id=id, cart__user=request.user)
+        cart_item = get_object_or_404(CartItem, id=cart_item_id, cart__user=request.user)
         action = request.POST.get("action")
         if action == "increase":
             cart_item.quantity += 1
@@ -366,8 +394,8 @@ def checkout_view(request):
 
 
 @login_required
-def remove_from_cart_view(request, id):
-    cart_item = get_object_or_404(CartItem, id=id, cart__user=request.user)
+def remove_from_cart_view(request, cart_item_id):
+    cart_item = get_object_or_404(CartItem, id=cart_item_id, cart__user=request.user)
     cart_item.delete()
     messages.success(request, "Product removed from cart.")
     return redirect("cart_view")
@@ -498,7 +526,8 @@ def product_list_view(request):
     product_var_all = (
         ProductVariant.objects.select_related("product__subcategory__category")
         .prefetch_related("images")
-        .all()
+        .filter(product__approval_status="approved")
+
     )
     categories = Category.objects.all()
     cart_variant_ids = []
@@ -547,32 +576,33 @@ def product_list_view(request):
     )
 
 
-def product_single_view(request, id):
+def product_single_view(request, variant_id):
     product_var = (
         ProductVariant.objects.select_related("product__subcategory__category")
         .prefetch_related("images")
-        .get(id=id)
+        .get(id=variant_id)
     )
     category = Category.objects.filter()
-    cart = Cart.objects.filter(user=request.user).first()
-    cart_items = CartItem.objects.filter(cart=cart).prefetch_related(
-        "variant__product__subcategory", "variant__images"
-    )
-
+    
+    cart_items = []
     wishlist_variant_ids = []
     cart_variant_ids = []
 
     if request.user.is_authenticated:
+        cart = Cart.objects.filter(user=request.user).first()
+        if cart:
+            cart_items = CartItem.objects.filter(cart=cart).prefetch_related(
+                "variant__product__subcategory", "variant__images"
+            )
+            cart_variant_ids = list(
+                CartItem.objects.filter(cart=cart).values_list("variant_id", flat=True)
+            )
+        
         wishlist_variant_ids = list(
             WishlistItem.objects.filter(wishlist__user=request.user).values_list(
                 "variant_id", flat=True
             )
         )
-
-        if cart:
-            cart_variant_ids = list(
-                CartItem.objects.filter(cart=cart).values_list("variant_id", flat=True)
-            )
 
     return render(
         request,
