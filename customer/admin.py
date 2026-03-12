@@ -7,6 +7,7 @@ from .models import (
     Review,
     Order,
     OrderItem,
+    PaymentOrder
 )
 
 admin.site.register(Cart)
@@ -16,3 +17,4 @@ admin.site.register(WishlistItem)
 admin.site.register(Review)
 admin.site.register(Order)
 admin.site.register(OrderItem)
+admin.site.register(PaymentOrder)

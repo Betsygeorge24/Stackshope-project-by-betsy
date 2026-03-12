@@ -1,10 +1,20 @@
-from django.shortcuts import render,redirect, get_object_or_404, redirect
-from core.decorators import seller_required
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .models import SellerProfile,Product,SubCategory,Attribute,VariantAttributeBridge,ProductVariant,ProductImage
+from core.decorators import seller_required, verified_seller_required
+from .models import (
+    SellerProfile,
+    Product,
+    SubCategory,
+    Attribute,
+    VariantAttributeBridge,
+    ProductVariant,
+    ProductImage,
+)
 from core.models import Category
 from django.db.models import Count, Sum, Max
 from customer.models import Order, OrderItem
+
+
 @login_required
 @seller_required
 def seller_profile_view(request):
@@ -20,46 +30,77 @@ def seller_profile_view(request):
         profile.ifsc_code = request.POST.get("ifsc_code")
         profile.business_address = request.POST.get("business_address")
 
-        
         if request.FILES.get("store_image"):
             profile.store_image = request.FILES.get("store_image")
 
         profile.save()
-        return redirect('dashboard')
+        return redirect("dashboard")
 
-    return render(request, "seller_templates/sellerprofilepage.html", {"profile": profile})
+    return render(
+        request, "seller_templates/sellerprofilepage.html", {"profile": profile}
+    )
 
-@login_required
-@seller_required
+
+@verified_seller_required
 def dashboard_view(request):
     seller = request.user.seller_profile
-    products = Product.objects.filter(seller=seller).order_by('-id')  
-    return render(request, "seller_templates/sellerdashboard.html", {"products": products})
+    products = Product.objects.filter(seller=seller).order_by("-id")
+    return render(
+        request, "seller_templates/sellerdashboard.html", {"products": products}
+    )
+
 
 def seller_bridge(request):
-    user=request.user
-    if user.is_authenticated:
-        if SellerProfile.objects.filter(user=request.user).exists():
-            return redirect("seller-profile")
+    if (
+        request.user.is_authenticated
+        and SellerProfile.objects.filter(user=request.user).exists()
+    ):
+        return redirect("seller-profile")
 
-        if request.method == "POST":
-            store_name = request.POST.get("store_name")
-            gst_number = request.POST.get("gst_number")
-            pan_number = request.POST.get("pan_number")
-            bank_account_number = request.POST.get("bank_account_number")
-            ifsc_code = request.POST.get("ifsc_code")
-            business_address = request.POST.get("business_address")
-            store_image = request.FILES.get("store_image")
+    if request.user.is_authenticated and request.method == "POST":
+        seller_profile, created = SellerProfile.objects.get_or_create(user=request.user)
+
+        seller_profile.store_name = request.POST.get("store_name")
+        seller_profile.gst_number = request.POST.get("tax_id", "")
+        seller_profile.pan_number = request.POST.get("pan_number", "")
+        seller_profile.bank_account_number = request.POST.get("bank_account_number", "")
+        seller_profile.ifsc_code = request.POST.get("ifsc_code", "")
+        seller_profile.business_address = request.POST.get("description", "")
+
+        if request.FILES.get("logo"):
+            seller_profile.store_image = request.FILES.get("logo")
+
+        seller_profile.save()
+
+        user = request.user
+        user.is_seller = True
+        user.role = "SELLER"
+        user.save()  
+        user.refresh_from_db()  
+
+        return redirect("seller-profile")
     return render(request, "seller_templates/seller_bridge.html")
-@login_required
+
+
 def seller_broche_view(request):
-    if SellerProfile.objects.filter(user=request.user).exists():
-        return redirect("dashboard")
+    if request.user.is_authenticated:
+        if (
+            SellerProfile.objects.filter(user=request.user).exists()
+            and request.user.is_seller
+            and request.user.is_verified_seller
+        ):
+            return redirect("dashboard")
+        elif (
+            SellerProfile.objects.filter(user=request.user).exists()
+            and request.user.is_seller
+        ):
+            return redirect("seller-profile")
+        else:
+            return redirect("seller-bridge")
     return render(request, "seller_templates/seller_broche.html")
 
 
-@login_required
-@seller_required
+@verified_seller_required
 def add_product(request):
     seller = request.user.seller_profile
     categories = Category.objects.all()
@@ -67,17 +108,16 @@ def add_product(request):
     attributes = Attribute.objects.prefetch_related("options").all()
 
     if request.method == "POST":
-        
+
         product = Product.objects.create(
             seller=seller,
             subcategory_id=request.POST.get("subcategory"),
             name=request.POST.get("name"),
             description=request.POST.get("description"),
             brand=request.POST.get("brand"),
-            model_number=request.POST.get("model_number")
+            model_number=request.POST.get("model_number"),
         )
 
-        
         variant = ProductVariant.objects.create(
             product=product,
             mrp=request.POST.get("mrp") or 0,
@@ -88,54 +128,56 @@ def add_product(request):
             length=request.POST.get("length") or 0,
             width=request.POST.get("width") or 0,
             height=request.POST.get("height") or 0,
-            tax_percentage=request.POST.get("tax_percentage") or 0
+            tax_percentage=request.POST.get("tax_percentage") or 0,
         )
 
-        
         for attribute in attributes:
             option_id = request.POST.get(f"attribute_{attribute.id}")
             if option_id:
                 VariantAttributeBridge.objects.create(
-                    variant=variant,
-                    option_id=option_id
+                    variant=variant, option_id=option_id
                 )
         primary_image = request.FILES.get("primary_image")
         if primary_image:
             ProductImage.objects.create(
-                variant=variant,
-                image_url=primary_image,
-                is_primary=True
+                variant=variant, image_url=primary_image, is_primary=True
             )
 
         additional_images = request.FILES.getlist("additional_images")
         for image in additional_images:
             ProductImage.objects.create(
-                variant=variant,
-                image_url=image,
-                is_primary=False
+                variant=variant, image_url=image, is_primary=False
             )
 
         return redirect("dashboard")
-    context = {"categories": categories,"subcategories": subcategories, "attributes": attributes }
+    context = {
+        "categories": categories,
+        "subcategories": subcategories,
+        "attributes": attributes,
+    }
     return render(request, "seller_templates/add_product.html", context)
 
-@login_required
-def update_product(request, product_id):
 
-    product = Product.objects.get(id=product_id)
+@verified_seller_required
+def update_product(request, product_id):
+    seller = request.user.seller_profile
+    product = get_object_or_404(Product, id=product_id, seller=seller)
+
     if request.method == "POST":
         product.name = request.POST.get("name")
         product.description = request.POST.get("description")
         product.brand = request.POST.get("brand")
         product.save()
-
         return redirect("dashboard")
 
-    return render(request, "seller_templates/update_product.html", {"product": product })
+    return render(request, "seller_templates/update_product.html", {"product": product})
 
-@login_required
+
+@verified_seller_required
 def delete_product(request, product_id):
-    product = Product.objects.get(id=product_id)
+    seller = request.user.seller_profile
+    product = get_object_or_404(Product, id=product_id, seller=seller)
+
     if request.method == "POST":
         product.delete()
         return redirect("dashboard")
@@ -145,39 +187,15 @@ def delete_product(request, product_id):
 
 
 
-def seller_customers(request):
-
+@verified_seller_required
+def seller_customers_orders(request):
     seller = request.user.seller_profile
 
-    customers = OrderItem.objects.filter(seller=seller).select_related("order__user")
-
-    
-    for customer in customers:
-        customer.default_address = customer.order.user.addresses.filter(is_default=True).first()
-    total_customers = customers.values("order__user").distinct().count()
-    delivered_orders = customers.filter(status="delivered").count()
-    revenue = customers.filter(status="delivered").aggregate(
-        total=Sum("price_at_purchase")
-    )["total"] or 0
+    customers = OrderItem.objects.filter(seller=seller)
 
     context = {
-        "customers": customers,
-        "total_customers": total_customers,
-        "delivered_orders": delivered_orders,
-        "revenue": revenue
+        "customers": customers
     }
 
     return render(request, "seller_templates/customerdetailforseller.html", context)
-def update_item_status(request, item_id):
-
-    if request.method == "POST":
-
-        item = get_object_or_404(OrderItem, id=item_id)
-
-        new_status = request.POST.get("status")
-
-        item.status = new_status
-        item.save()
-
-    return redirect("seller_customers")
 

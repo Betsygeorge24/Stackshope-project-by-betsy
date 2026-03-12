@@ -1,0 +1,170 @@
+{% load static %}
+<!DOCTYPE html>
+<html class="light scroll-smooth" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Order Successful - StackShop</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <link type="icon/" rel="icon" href="/static/favicon.ico" />
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        "dark": "#30364F",
+                        "muted": "#ACBAC4",
+                        "accent": "#E1D9BC",
+                        "light": "#F0F0DB",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+
+<body class="bg-light/30 text-dark font-display flex flex-col min-h-screen">
+
+    {% include "customer_templates/Navbar.html" %}
+
+    <main class="max-w-7xl mx-auto w-full px-4 py-8 md:py-12 flex-grow">
+        {% include "core_templates/messages.html" %}
+
+        <!-- Success Card -->
+        <div class="max-w-2xl mx-auto">
+            <div class="bg-white rounded-3xl shadow-lg border border-green-200 overflow-hidden">
+                
+                <!-- Success Header -->
+                <div class="bg-gradient-to-r from-green-50 to-emerald-50 px-6 md:px-8 py-12 text-center">
+                    <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <span class="material-icons text-5xl text-green-600">check_circle</span>
+                    </div>
+                    <h1 class="text-4xl md:text-5xl font-black text-dark mb-2">Order Successful!</h1>
+                    <p class="text-lg text-muted font-medium">Thank you for your purchase</p>
+                </div>
+
+                <!-- Order Details -->
+                <div class="px-6 md:px-8 py-8">
+                    
+                    <!-- Order ID -->
+                    <div class="bg-light/50 rounded-xl p-6 mb-8 border border-muted/20">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">Order ID</p>
+                                <p class="text-lg font-extrabold text-dark break-all">{{ order.order_number }}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">Razorpay Order ID</p>
+                                <p class="text-lg font-extrabold text-dark break-all">{{ payment_order.razorpay_order_id }}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">Payment ID</p>
+                                <p class="text-lg font-extrabold text-dark break-all">{{ payment_order.razorpay_payment_id }}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">Order Date</p>
+                                <p class="text-lg font-extrabold text-dark">{{ order.ordered_at|date:"d M, Y" }}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">Order Amount</p>
+                                <p class="text-lg font-extrabold text-green-600">₹{{ order.total_amount|floatformat:2 }}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold uppercase tracking-widest text-muted mb-2">Payment Status</p>
+                                <p class="text-lg font-extrabold text-green-600">{{ order.payment_status }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-xl mb-8">
+                        <span class="material-icons text-green-600">verified</span>
+                        <div>
+                            <p class="font-bold text-dark">Payment Verified</p>
+                            <p class="text-sm text-muted">Your payment has been successfully processed</p>
+                        </div>
+                    </div>
+
+                    <!-- What Happens Next -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-8">
+                        <h3 class="font-bold text-dark mb-4 flex items-center gap-2">
+                            <span class="material-icons text-blue-600">info</span>
+                            What Happens Next
+                        </h3>
+                        <ul class="space-y-3">
+                            <li class="flex items-start gap-3">
+                                <span class="material-icons text-blue-600 flex-shrink-0 mt-1">check</span>
+                                <div>
+                                    <p class="font-bold text-dark text-sm">Order Confirmation</p>
+                                    <p class="text-xs text-muted">You'll receive an email confirmation shortly</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <span class="material-icons text-blue-600 flex-shrink-0 mt-1">check</span>
+                                <div>
+                                    <p class="font-bold text-dark text-sm">Order Processing</p>
+                                    <p class="text-xs text-muted">Our team will begin processing your order</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <span class="material-icons text-blue-600 flex-shrink-0 mt-1">check</span>
+                                <div>
+                                    <p class="font-bold text-dark text-sm">Shipping Updates</p>
+                                    <p class="text-xs text-muted">Track your order from your account dashboard</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <a href="{% url 'order-history' %}" class="bg-dark hover:bg-opacity-90 text-light text-center py-3 rounded-xl font-bold text-sm uppercase tracking-widest transition-all shadow-lg shadow-dark/20 flex items-center justify-center gap-2">
+                            <span class="material-icons text-[18px]">receipt</span> View Orders
+                        </a>
+                        <a href="{% url 'home' %}" class="bg-accent text-dark hover:bg-opacity-90 text-center py-3 rounded-xl font-bold text-sm uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-2">
+                            <span class="material-icons text-[18px]">shopping_bag</span> Continue Shopping
+                        </a>
+                    </div>
+
+                </div>
+
+                <!-- Footer Message -->
+                <div class="bg-light/30 px-6 md:px-8 py-6 text-center border-t border-muted/20">
+                    <p class="text-sm text-muted mb-2">Need Help?</p>
+                    <a href="mailto:support@stackshop.com" class="text-dark font-bold hover:text-muted transition-colors">Contact Our Support Team</a>
+                </div>
+
+            </div>
+
+            <!-- Trust Badges -->
+            <div class="flex items-center justify-center gap-6 mt-12 flex-wrap">
+                <div class="flex items-center gap-2 text-muted">
+                    <span class="material-icons text-[20px]">verified_user</span>
+                    <span class="text-sm font-bold">Secure Transaction</span>
+                </div>
+                <div class="flex items-center gap-2 text-muted">
+                    <span class="material-icons text-[20px]">local_shipping</span>
+                    <span class="text-sm font-bold">Free Shipping</span>
+                </div>
+                <div class="flex items-center gap-2 text-muted">
+                    <span class="material-icons text-[20px]">loop</span>
+                    <span class="text-sm font-bold">Easy Returns</span>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    {% include "customer_templates/Footer.html" %}
+
+</body>
+
+</html>

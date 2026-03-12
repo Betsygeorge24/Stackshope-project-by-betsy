@@ -51,52 +51,93 @@
             <div class="bg-white rounded-2xl shadow-sm border border-muted/30 p-6 sticky top-24">
                 <h2 class="font-extrabold text-xl text-dark uppercase tracking-wide mb-6">Filters</h2>
 
-                <div class="mb-8">
-                    <h3
-                        class="font-bold text-sm text-dark uppercase tracking-widest mb-3 border-b border-muted/30 pb-2">
-                        Categories</h3>
-                    <ul class="space-y-3">
-                        <li>
-                            <label class="flex items-center gap-3 cursor-pointer group">
-                                <input type="checkbox" class="w-4 h-4 rounded border-muted text-dark focus:ring-dark"
-                                    checked>
-                                <span
-                                    class="text-sm font-semibold text-dark/80 group-hover:text-dark transition-colors">All
-                                    Products</span>
-                            </label>
-                        </li>
-                        <li>
-                            <label class="flex items-center gap-3 cursor-pointer group">
-                                <input type="checkbox" class="w-4 h-4 rounded border-muted text-dark focus:ring-dark">
-                                <span
-                                    class="text-sm font-semibold text-dark/80 group-hover:text-dark transition-colors">Electronics</span>
-                            </label>
-                        </li>
-                        <li>
-                            <label class="flex items-center gap-3 cursor-pointer group">
-                                <input type="checkbox" class="w-4 h-4 rounded border-muted text-dark focus:ring-dark">
-                                <span
-                                    class="text-sm font-semibold text-dark/80 group-hover:text-dark transition-colors">Footwear</span>
-                            </label>
-                        </li>
-                    </ul>
-                </div>
+                <form method="GET" action="{% url 'search' %}" id="filter-form" class="space-y-8">
+                    <!-- Preserve search query -->
+                    {% if search_query %}
+                    <input type="hidden" name="q" value="{{ search_query }}">
+                    {% endif %}
+                    
+                    <!-- Hidden sort input -->
+                    <input type="hidden" name="sort" id="sort-input" value="{{ sort_by }}">
+                    
+                    <!-- Hidden subcategory input -->
+                    {% if selected_subcategory %}
+                    <input type="hidden" name="subcategory" value="{{ selected_subcategory }}">
+                    {% endif %}
 
-                <div>
-                    <h3
-                        class="font-bold text-sm text-dark uppercase tracking-widest mb-3 border-b border-muted/30 pb-2">
-                        Price Range</h3>
-                    <div class="flex items-center gap-2">
-                        <input type="number" placeholder="Min"
-                            class="w-full px-3 py-2 text-sm font-semibold border border-muted/50 rounded-lg focus:outline-none focus:border-dark focus:ring-1 focus:ring-dark bg-light/50">
-                        <span class="text-muted font-bold">-</span>
-                        <input type="number" placeholder="Max"
-                            class="w-full px-3 py-2 text-sm font-semibold border border-muted/50 rounded-lg focus:outline-none focus:border-dark focus:ring-1 focus:ring-dark bg-light/50">
+                    <div class="mb-8">
+                        <h3
+                            class="font-bold text-sm text-dark uppercase tracking-widest mb-3 border-b border-muted/30 pb-2">
+                            Categories
+                        </h3>
+                        <ul class="space-y-3">
+
+                            <li>
+                                <label class="flex items-center gap-3 cursor-pointer group">
+                                    <input type="checkbox" name="category" value="all"
+                                        class="w-4 h-4 rounded border-muted text-dark focus:ring-dark category-checkbox"
+                                        {% if not selected_categories or "all" in selected_categories %}checked{% endif %}>
+                                    <span
+                                        class="text-sm font-semibold text-dark/80 group-hover:text-dark transition-colors">
+                                        All Products
+                                    </span>
+                                </label>
+                            </li>
+
+                            {% for category in categories %}
+                            <li>
+                                <label class="flex items-center gap-3 cursor-pointer group">
+                                    <input type="checkbox" name="category" value="{{ category.slug }}"
+                                        class="w-4 h-4 rounded border-muted text-dark focus:ring-dark category-checkbox"
+                                        {% if category.slug in selected_categories %}checked{% endif %}>
+                                    <span
+                                        class="text-sm font-semibold text-dark/80 group-hover:text-dark transition-colors">
+                                        {{ category.name }}
+                                    </span>
+                                </label>
+                            </li>
+                            {% empty %}
+                            <li>
+                                <span class="text-sm font-semibold text-muted italic">No other categories available</span>
+                            </li>
+                            {% endfor %}
+
+                        </ul>
                     </div>
-                    <button
-                        class="w-full mt-4 bg-dark text-light py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest hover:opacity-90 shadow-md transition-all active:scale-95">Apply
-                        Filter</button>
-                </div>
+
+                    <div>
+                        <h3
+                            class="font-bold text-sm text-dark uppercase tracking-widest mb-3 border-b border-muted/30 pb-2">
+                            Price Range</h3>
+                        
+                        <div class="space-y-3">
+                            <div>
+                                <label class="text-xs font-bold text-muted uppercase tracking-widest mb-1 block">Minimum Price</label>
+                                <input type="number" 
+                                    name="min_price" 
+                                    placeholder="Min" 
+                                    value="{{ min_price }}"
+                                    min="0"
+                                    class="w-full px-3 py-2 text-sm font-semibold border border-muted/50 rounded-lg focus:outline-none focus:border-dark focus:ring-1 focus:ring-dark bg-light/50">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-muted uppercase tracking-widest mb-1 block">Maximum Price</label>
+                                <input type="number" 
+                                    name="max_price" 
+                                    placeholder="Max" 
+                                    value="{{ max_price }}"
+                                    min="0"
+                                    class="w-full px-3 py-2 text-sm font-semibold border border-muted/50 rounded-lg focus:outline-none focus:border-dark focus:ring-1 focus:ring-dark bg-light/50">
+                            </div>
+                        </div>
+                        <button type="submit"
+                            class="w-full mt-4 bg-dark text-light py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-dark/90 shadow-md transition-all active:scale-95">Apply
+                            Filter</button>
+                        <a href="{% url 'search' %}?category=all"
+                            class="w-full mt-2 block text-center bg-light/50 text-dark py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-light border border-muted/50 transition-all">Clear
+                            All Filters</a>
+                    </div>
+                </form>
             </div>
         </aside>
 
@@ -104,23 +145,30 @@
 
             <div
                 class="flex flex-col sm:flex-row sm:items-center justify-between mb-8 bg-white p-4 rounded-2xl shadow-sm border border-muted/30">
-                <p class="text-sm font-bold text-muted mb-4 sm:mb-0">Showing <span class="text-dark">All</span> Products
+                <p class="text-sm font-bold text-muted mb-4 sm:mb-0">Showing <span class="text-dark">{{ page_obj.object_list|length }}</span> of <span class="text-dark">{{ paginator.count }}</span> Products {% if page_obj.has_other_pages %}<span class="text-muted font-semibold">(Page {{ page_obj.number }} of {{ paginator.num_pages }}){% endif %}</span>
                 </p>
                 <div class="flex items-center gap-3">
                     <span class="text-xs font-extrabold text-dark uppercase tracking-widest">Sort By:</span>
-                    <select
+                    <select name="sort" id="sort-select" onchange="document.getElementById('sort-input').value = this.value; document.getElementById('filter-form').submit();"
                         class="text-sm font-bold border border-muted/50 rounded-xl py-2 px-4 bg-light/50 text-dark focus:outline-none focus:border-dark cursor-pointer">
-                        <option>Featured</option>
-                        <option>Price: Low to High</option>
-                        <option>Price: High to Low</option>
-                        <option>Newest Arrivals</option>
+                        <option value="featured" {% if sort_by == "featured" %}selected{% endif %}>Featured</option>
+                        <option value="price-low-high" {% if sort_by == "price-low-high" %}selected{% endif %}>Price: Low to High</option>
+                        <option value="price-high-low" {% if sort_by == "price-high-low" %}selected{% endif %}>Price: High to Low</option>
+                        <option value="newest" {% if sort_by == "newest" %}selected{% endif %}>Newest Arrivals</option>
                     </select>
                 </div>
             </div>
-
+            {% if search_query %}
+            <div class="mb-8 border-b border-muted/20 pb-4">
+                <h2 class="text-2xl font-black text-dark">
+                    Search Results for "<span class="text-accent italic">{{ search_query }}</span>"
+                </h2>
+                <p class="text-sm font-bold text-muted mt-1">Found {{ product_var.count }} items</p>
+            </div>
+            {% endif %}
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
                 {% for x in product_var %}
-
+                
                 <div
                     class="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-muted/30 hover:border-dark/30 transition-all duration-300 flex flex-col relative">
 
@@ -128,9 +176,9 @@
                         {% csrf_token %}
                         <button type="submit" class="w-10 h-10 backdrop-blur-md rounded-full flex items-center justify-center border shadow-sm transition-all duration-300 hover:scale-110 active:scale-95
                             {% if x.id in wishlist_variant_ids %}
-                                bg-red-500 text-white border-red-500 hover:bg-red-600 hover:border-red-600
+                                bg-accent text-red-500 border-accent hover:bg-accent/90 hover:border-dark
                             {% else %}
-                                bg-white/90 text-muted border-muted/30 hover:text-red-500 hover:bg-red-50 hover:border-red-200
+                                bg-white/90 text-muted border-muted/30 hover:text-dark hover:bg-accent/20 hover:border-accent/50
                             {% endif %}"
                             title="{% if x.id in wishlist_variant_ids %}Remove from Wishlist{% else %}Add to Wishlist{% endif %}">
                             <span class="material-icons text-[20px]">
@@ -143,7 +191,7 @@
                         class="aspect-[4/3] bg-light/30 relative overflow-hidden border-b border-muted/20 flex items-center justify-center p-6 group-hover:bg-light/60 transition-colors">
                         {% if x.images.first %}
                         <img alt="{{ x.product.name }}"
-                            class="w-full h-full object-contain mix-blend-multiply transition-transform duration-500 group-hover:scale-110"
+                            class="w-full h-full object-fit-cover mix-blend-multiply transition-transform duration-500 group-hover:scale-110"
                             src="{{ x.images.first.image_url.url }}" />
                         {% else %}
                         <img alt="Placeholder" class="w-full h-full object-contain mix-blend-multiply opacity-50"
@@ -162,7 +210,7 @@
                 <div class="p-5 flex flex-col flex-grow bg-white">
                     <div class="flex justify-between items-start mb-2">
                         <span class="text-[10px] font-extrabold uppercase tracking-widest text-muted">
-                            {{ x.product.category.name|default:"General" }}
+                            {{ x.product.subcategory.category.name|default:"General" }}
                         </span>
                     </div>
                     <div class="flex items-start justify-between gap-3 mb-2">
@@ -187,15 +235,7 @@
                                 <span class="material-icons text-[14px]">star</span>
                                 <span class="material-icons text-[14px]">star_half</span>
                             </div>
-                            <span class="text-[11px] font-bold text-muted ml-0.5">({{ x.product.rating|default:"0.0"}})</span>
                         </div>
-
-                        {% if x.product.sold_count %}
-                        <span
-                            class="text-[10px] font-bold text-dark bg-accent/30 px-2 py-0.5 rounded-full flex items-center gap-1">
-                            <span class="material-icons text-[11px]">trending_up</span> {{ x.product.sold_count }} Sold
-                        </span>
-                        {% endif %}
                     </div>
 
                     <div class="mt-auto pt-4 border-t border-muted/20 flex items-center justify-between">
@@ -215,7 +255,7 @@
                                 <span class="material-icons text-[20px]">check_circle</span>
                             </button>
                             {% else %}
-                            <button type="submit"{% if x.stock_quantity < 0 %}disabled{% endif %}
+                            <button type="submit" {% if x.stock_quantity < 0 %}disabled{% endif %}
                                 class="bg-dark text-light p-2.5 rounded-xl hover:bg-accent hover:text-dark transition-all duration-300 border border-transparent hover:border-dark shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed group/cart"
                                 title="Add to Cart">
                                 <span
@@ -234,40 +274,92 @@
                 <h3 class="text-xl font-extrabold text-dark mb-2">No Products Found</h3>
                 <p class="text-muted font-medium max-w-sm text-center">We couldn't find any products matching your
                     current filters or category selection.</p>
-                <button
-                    class="mt-6 bg-dark text-light px-6 py-2.5 rounded-xl font-bold hover:opacity-90 transition-opacity shadow-md">Clear
-                    All Filters</button>
+                <a href="{% url 'search' %}?category=all"
+                    class="mt-6 bg-dark text-light px-6 py-2.5 rounded-xl font-bold hover:opacity-90 transition-opacity shadow-md inline-block">Clear
+                    All Filters</a>
             </div>
             {% endfor %}
 
         </div>
 
         <div class="mt-12 flex justify-center">
+            {% if page_obj.has_other_pages %}
             <nav class="flex items-center gap-2">
-                <button
-                    class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/50 text-muted hover:text-dark hover:border-dark hover:bg-white transition-all shadow-sm">
+                <!-- Previous Button -->
+                {% if page_obj.has_previous %}
+                <a href="?page=1" class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/50 text-muted hover:text-dark hover:border-dark hover:bg-white transition-all shadow-sm" title="First Page">
+                    <span class="material-icons text-sm">first_page</span>
+                </a>
+                <a href="?page={{ page_obj.previous_page_number }}" class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/50 text-muted hover:text-dark hover:border-dark hover:bg-white transition-all shadow-sm" title="Previous Page">
+                    <span class="material-icons text-sm">chevron_left</span>
+                </a>
+                {% else %}
+                <button disabled class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/50 text-muted/30 cursor-not-allowed opacity-50">
+                    <span class="material-icons text-sm">first_page</span>
+                </button>
+                <button disabled class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/50 text-muted/30 cursor-not-allowed opacity-50">
                     <span class="material-icons text-sm">chevron_left</span>
                 </button>
-                <button
-                    class="w-10 h-10 flex items-center justify-center rounded-xl border border-transparent bg-dark text-light font-bold shadow-md">1</button>
-                <button
-                    class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/50 text-dark font-bold hover:bg-accent hover:border-dark hover:shadow-sm transition-all bg-white">2</button>
-                <button
-                    class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/50 text-dark font-bold hover:bg-accent hover:border-dark hover:shadow-sm transition-all bg-white">3</button>
-                <span class="px-2 text-muted font-bold tracking-widest">...</span>
-                <button
-                    class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/50 text-dark font-bold hover:bg-accent hover:border-dark hover:shadow-sm transition-all bg-white">8</button>
-                <button
-                    class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/50 text-muted hover:text-dark hover:border-dark hover:bg-white transition-all shadow-sm">
+                {% endif %}
+
+                <!-- Page Numbers -->
+                {% for num in paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <button disabled class="w-10 h-10 flex items-center justify-center rounded-xl border border-transparent bg-dark text-light font-bold shadow-md cursor-default">{{ num }}</button>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a href="?page={{ num }}" class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/50 text-dark font-bold hover:bg-accent hover:border-dark hover:shadow-sm transition-all bg-white">{{ num }}</a>
+                    {% elif num == 1 %}
+                    <a href="?page={{ num }}" class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/50 text-dark font-bold hover:bg-accent hover:border-dark hover:shadow-sm transition-all bg-white">{{ num }}</a>
+                    {% elif num == paginator.num_pages %}
+                    <a href="?page={{ num }}" class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/50 text-dark font-bold hover:bg-accent hover:border-dark hover:shadow-sm transition-all bg-white">{{ num }}</a>
+                    {% elif num == page_obj.number|add:'-4' or num == page_obj.number|add:'4' %}
+                    <span class="px-2 text-muted font-bold tracking-widest">...</span>
+                    {% endif %}
+                {% endfor %}
+
+                <!-- Next Button -->
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/50 text-muted hover:text-dark hover:border-dark hover:bg-white transition-all shadow-sm" title="Next Page">
+                    <span class="material-icons text-sm">chevron_right</span>
+                </a>
+                <a href="?page={{ paginator.num_pages }}" class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/50 text-muted hover:text-dark hover:border-dark hover:bg-white transition-all shadow-sm" title="Last Page">
+                    <span class="material-icons text-sm">last_page</span>
+                </a>
+                {% else %}
+                <button disabled class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/50 text-muted/30 cursor-not-allowed opacity-50">
                     <span class="material-icons text-sm">chevron_right</span>
                 </button>
+                <button disabled class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/50 text-muted/30 cursor-not-allowed opacity-50">
+                    <span class="material-icons text-sm">last_page</span>
+                </button>
+                {% endif %}
             </nav>
-        </div>
+            {% endif %}
 
         </div>
     </main>
 
     {% include "customer_templates/Footer.html" %}
+
+    <script>
+        // Auto-submit form when category checkbox is changed
+        document.querySelectorAll('.category-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                // Handle "all" checkbox logic
+                if (this.value === 'all' && this.checked) {
+                    // If "all" is checked, uncheck other categories
+                    document.querySelectorAll('.category-checkbox').forEach(cb => {
+                        if (cb.value !== 'all') cb.checked = false;
+                    });
+                } else if (this.value !== 'all' && this.checked) {
+                    // If any category is checked, uncheck "all"
+                    document.querySelector('.category-checkbox[value="all"]').checked = false;
+                }
+                // Submit the form
+                document.getElementById('filter-form').submit();
+            });
+        });
+    </script>
 
 </body>
 

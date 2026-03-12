@@ -57,7 +57,7 @@
         <nav class="flex items-center gap-2 text-xs font-bold text-muted mb-8 uppercase tracking-widest border-b border-muted/20 pb-4">
             <a href="{% url 'home' %}" class="hover:text-dark transition-colors">Home</a>
             <span class="material-icons text-[14px]">chevron_right</span>
-            <a href="{% url 'category' %}#cat-{{variant.product.subcategory.category}}" class="hover:text-dark transition-colors">{{ variant.product.subcategory.category.name }}</a>
+            <a href="{% url 'catogory_list' %}#cat- {{ category.name|slugify }}" class="hover:text-dark transition-colors">{{ variant.product.subcategory.category.name }}</a>
             <span class="material-icons text-[14px]">chevron_right</span>
             <span class="text-dark truncate max-w-[200px]">{{ variant.product.name }}</span>
         </nav>
@@ -136,6 +136,15 @@
                             <button type="submit" {% if variant.stock_quantity <= 0 %}disabled{% endif %} class="flex-1 bg-dark text-light text-sm font-bold rounded-xl h-14 flex items-center justify-center gap-2 hover:bg-accent hover:text-dark transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed group">
                                 <span class="material-icons text-[20px] transition-transform group-hover:rotate-12">add_shopping_cart</span> 
                                 {% if variant.stock_quantity <= 0 %}Out of Stock{% else %}Add to Cart{% endif %}
+                            </button>
+                        </form>
+
+                        <form action="{% url 'buy_now' variant.id %}" method="POST" class="w-full">
+                            {% csrf_token %}
+                            <input type="hidden" name="quantity" id="buynow-qty" value="1">
+                            <button type="submit" {% if variant.stock_quantity <= 0 %}disabled{% endif %} class="w-full bg-accent text-dark text-sm font-bold rounded-xl h-12 flex items-center justify-center gap-2 hover:bg-dark hover:text-light transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed group">
+                                <span class="material-icons text-[18px] transition-transform group-hover:scale-110">flash_on</span>
+                                {% if variant.stock_quantity <= 0 %}Out of Stock{% else %}Buy Now{% endif %}
                             </button>
                         </form>
 
@@ -378,9 +387,11 @@
 
         function updateQty(change) {
             const input = document.getElementById('qty-input');
+            const buynowQty = document.getElementById('buynow-qty');
             let newVal = parseInt(input.value) + change;
             if (newVal >= parseInt(input.min) && newVal <= parseInt(input.max)) {
                 input.value = newVal;
+                buynowQty.value = newVal;
             }
         }
     </script>

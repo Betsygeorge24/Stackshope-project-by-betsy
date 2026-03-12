@@ -1,181 +1,433 @@
 from urllib import request
-from django.shortcuts import render,redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from seller.models import Product,ProductVariant
-from customer.models import Wishlist,WishlistItem,Cart,CartItem
 from django.contrib import messages
-from core.models import Address
-from django.shortcuts import get_object_or_404
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from seller.models import Product, ProductVariant
+from customer.models import (
+    Wishlist,
+    WishlistItem,
+    Cart,
+    CartItem,
+    Order,
+    PaymentOrder,
+    OrderItem,
+)
+from core.models import Address, Category
+import razorpay
+from django.conf import settings
+from django.shortcuts import render
+import json
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import time
+
+
+@csrf_exempt
+@csrf_exempt
+def payment_success(request):
+
+    data = json.loads(request.body)
+
+    client = razorpay.Client(
+        auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
+    )
+
+    params_dict = {
+        "razorpay_order_id": data["razorpay_order_id"],
+        "razorpay_payment_id": data["razorpay_payment_id"],
+        "razorpay_signature": data["razorpay_signature"],
+    }
+
+    try:
+        client.utility.verify_payment_signature(params_dict)
+
+        payment_order = PaymentOrder.objects.get(
+            razorpay_order_id=data["razorpay_order_id"]
+        )
+
+        payment_order.razorpay_payment_id = data["razorpay_payment_id"]
+        payment_order.razorpay_signature = data["razorpay_signature"]
+        payment_order.status = "SUCCESS"
+        payment_order.save()
+
+        order = payment_order.order
+        order.payment_status = "SUCCESS"
+        order.order_status = "CONFIRMED"
+        order.save()
+
+        cart = Cart.objects.get(user=payment_order.user)
+        cart_items = CartItem.objects.filter(cart=cart)
+
+        for cart_item in cart_items:
+            OrderItem.objects.create(
+                order=order,
+                variant=cart_item.variant,
+                seller=cart_item.variant.product.seller, 
+                quantity=cart_item.quantity,
+                price_at_purchase=cart_item.price_at_time,
+            )
+
+        cart_items.delete()
+
+        return JsonResponse({"status": "payment verified"})
+
+    except Exception as e:
+        return JsonResponse({"status": "payment failed", "error": str(e)})
+
+
+@login_required
+def order_success(request):
+    """Display order success page after payment completion"""
+    try:
+        payment_order = (
+            PaymentOrder.objects.filter(user=request.user, status="SUCCESS")
+            .order_by("-created_at")
+            .first()
+        )
+
+        if payment_order:
+            cart = Cart.objects.get(user=request.user)
+            cart.items.all().delete()
+
+            context = {
+                "order": payment_order.order,
+                "payment_order": payment_order,
+                "order_amount": payment_order.amount
+                / 100, 
+            }
+            return render(request, "customer_templates/order_success.html", context)
+        else:
+            messages.error(request, "No order found.")
+            return redirect("cart_view")
+    except Cart.DoesNotExist:
+        messages.error(request, "Cart not found.")
+        return redirect("cart_view")
+    except Exception as e:
+        messages.error(request, f"An error occurred: {str(e)}")
+        return redirect("cart_view")
+
+
 # userlogin-----------------------------------------------------------------------------
+
 
 @login_required
 def user_profile_view(request):
-    user=request.user
-    if request.method=="POST":
-        first_name=request.POST.get('first_name')
-        last_name=request.POST.get('last_name')
-        phone=request.POST.get('phone')
-        image=request.FILES.get('profile_photo')
-        user.first_name=first_name
-        user.last_name=last_name
-        user.phone_number=phone
+    user = request.user
+    if request.method == "POST":
+        first_name = request.POST.get("first_name")
+        last_name = request.POST.get("last_name")
+        phone = request.POST.get("phone")
+        image = request.FILES.get("profile_photo")
+        user.first_name = first_name
+        user.last_name = last_name
+        user.phone_number = phone
         if image:
-            user.profile_image=image
+            user.profile_image = image
         user.save()
-    return render(request,'customer_templates/profile.html',{"user":user})
-#------------------------------------------------------------------------------
+    return render(request, "customer_templates/profile.html", {"user": user})
 
-# wishlist---------------------------------------------------------------------
-@login_required
-def add_wishlist_view(request, id):
-    product_variant = get_object_or_404(ProductVariant, id=id)
-    try:
-        wishlist = Wishlist.objects.get(user=request.user, is_default=True)
-    except Wishlist.DoesNotExist:
-        wishlist, created = Wishlist.objects.get_or_create(user=request.user,wishlist_name=f"{request.user.username}'s Wishlist",is_default=True)
-        if created:
-            messages.success(request, f"( {wishlist.wishlist_name} ) created.")
-        return redirect('product_list')
-    if WishlistItem.objects.filter(wishlist=wishlist, variant=product_variant).exists():
-        messages.error(request, f"Product already in ( {wishlist.wishlist_name} ).")
-        return redirect('product_list')
-    else:
-        WishlistItem.objects.get_or_create(wishlist=wishlist, variant=product_variant)
-        messages.success(request, f"Product added to ( {wishlist.wishlist_name} ).")
-        return redirect('product_list')
-@login_required
-def remove_wishlist_view(request, id):
-    wishlist_item = get_object_or_404(WishlistItem, id=id, wishlist__user=request.user)
-    wishlist_item.delete()
-    messages.success(request, "Product removed from wishlist.")
-    return redirect('wishlist')
-@login_required
-def wishlist_view(request):
-    wishlists = Wishlist.objects.filter(user=request.user).prefetch_related('items__variant__product', 'items__variant__images').order_by('-is_default', '-created_at')
-    context = {
-        'wishlists': wishlists,'wishlist_collections': wishlists, 
-    }
-    return render(request,'customer_templates/wishlistpage.html',context)
-def create_collection_view(request):
-    if request.method == 'POST':
-        wishlist_name = request.POST.get('collection_name')
-        if wishlist_name:
-            Wishlist.objects.create(user=request.user, wishlist_name=wishlist_name)
-            messages.success(request, f"Collection '{wishlist_name}' created successfully.")
-        else:
-            messages.error(request, "Collection name cannot be empty.")
-    return redirect('wishlist')
-def update_collection_view(request):
-    if request.method == 'POST':
-        wishlist_id = request.POST.get('wishlist_id')
-        wishlist_name = request.POST.get('collection_name')
-        is_default_checked = (request.POST.get('is_default') == 'on')
-        collection=get_object_or_404(Wishlist,id=wishlist_id,user=request.user)
-        if collection.is_default and not is_default_checked:
-            messages.error(request, "You cannot unset the default collection. Please set another collection as default first.")
-            return redirect('wishlist')
-        collection.wishlist_name=wishlist_name
-        collection.is_default = is_default_checked
-        collection.save()
-        messages.success(request, f"Collection '{wishlist_name}' updated successfully.")
-        return redirect('wishlist')
-    else:
-        messages.error(request, "Collection name cannot be empty.")
-    return redirect('wishlist')
-def delete_collection_view(request,wishlist_id):
-    collection=get_object_or_404(Wishlist,id=wishlist_id,user=request.user)
-    if collection.is_default:
-        messages.error(request, "You cannot delete the default collection. Please set another collection as default first.")
-        return redirect('wishlist')
-    collection.delete()
-    messages.success(request, f"Collection '{collection.wishlist_name}' deleted successfully.")
-    return redirect('wishlist')
 
 # ------------------------------------------------------------------------------
 
-#cart---------------------------------------------------------------------------
+# wishlist---------------------------------------------------------------------
 @login_required
-def add_to_cart_view(request,id):
-    user=request.user
-    product_variant=get_object_or_404(ProductVariant,id=id)
-    cart, _ = Cart.objects.get_or_create(user=request.user)
-    cart_item,created=CartItem.objects.get_or_create(cart=cart,variant=product_variant,defaults={'quantity': 1, 'price_at_time': product_variant.selling_price})
+def add_wishlist_view(request, variant_id):
+    product_variant = get_object_or_404(ProductVariant, id=variant_id)
+    try:
+        wishlist = Wishlist.objects.get(user=request.user, is_default=True)
+    except Wishlist.DoesNotExist:
+        wishlist, created = Wishlist.objects.get_or_create(
+            user=request.user,
+            wishlist_name=f"{request.user.username}'s Wishlist",
+            is_default=True,
+        )
+        if created:
+            messages.success(request, f"( {wishlist.wishlist_name} ) created.")
+
+    wishlist_item = WishlistItem.objects.filter(
+        wishlist=wishlist, variant=product_variant
+    )
+    if wishlist_item.exists():
+        wishlist_item.delete()
+        messages.warning(request, f"Product removed from ( {wishlist.wishlist_name} ).")
+    else:
+        WishlistItem.objects.create(wishlist=wishlist, variant=product_variant)
+        messages.success(request, f"Product added to ( {wishlist.wishlist_name} ).")
+
+    return redirect(request.META.get("HTTP_REFERER", "home"))
+
+
+@login_required
+def remove_wishlist_view(request, wishlist_item_id):
+    wishlist_item = get_object_or_404(WishlistItem, id=wishlist_item_id, wishlist__user=request.user)
+    wishlist_item.delete()
+    messages.success(request, "Product removed from wishlist.")
+    return redirect("wishlist")
+
+
+@login_required
+def wishlist_view(request):
+    wishlists = (
+        Wishlist.objects.filter(user=request.user)
+        .prefetch_related(
+            "items__variant__product__subcategory", "items__variant__images"
+        )
+        .order_by("-is_default", "-created_at")
+    )
+    context = {
+        "wishlists": wishlists,
+        "wishlist_collections": wishlists,
+    }
+    return render(request, "customer_templates/wishlistpage.html", context)
+
+
+def create_collection_view(request):
+    if request.method == "POST":
+        wishlist_name = request.POST.get("collection_name")
+        if wishlist_name:
+            Wishlist.objects.create(user=request.user, wishlist_name=wishlist_name)
+            messages.success(
+                request, f"Collection '{wishlist_name}' created successfully."
+            )
+        else:
+            messages.error(request, "Collection name cannot be empty.")
+    return redirect("wishlist")
+
+
+def update_collection_view(request):
+    if request.method == "POST":
+        wishlist_id = request.POST.get("wishlist_id")
+        wishlist_name = request.POST.get("collection_name")
+        is_default_checked = request.POST.get("is_default") == "on"
+        collection = get_object_or_404(Wishlist, id=wishlist_id, user=request.user)
+        if collection.is_default and not is_default_checked:
+            messages.error(
+                request,
+                "You cannot unset the default collection. Please set another collection as default first.",
+            )
+            return redirect("wishlist")
+        collection.wishlist_name = wishlist_name
+        collection.is_default = is_default_checked
+        collection.save()
+        messages.success(request, f"Collection '{wishlist_name}' updated successfully.")
+        return redirect("wishlist")
+    else:
+        messages.error(request, "Collection name cannot be empty.")
+    return redirect("wishlist")
+
+
+def delete_collection_view(request, wishlist_id):
+    collection = get_object_or_404(Wishlist, id=wishlist_id, user=request.user)
+    if collection.is_default:
+        messages.error(
+            request,
+            "You cannot delete the default collection. Please set another collection as default first.",
+        )
+        return redirect("wishlist")
+    collection.delete()
+    messages.success(
+        request, f"Collection '{collection.wishlist_name}' deleted successfully."
+    )
+    return redirect("wishlist")
+
+
+# ------------------------------------------------------------------------------
+
+# cart---------------------------------------------------------------------------
+@login_required
+def add_to_cart_view(request, variant_id):
+    user = request.user
+    product_variant = get_object_or_404(ProductVariant, id=variant_id)
+    cart, _ = Cart.objects.get_or_create(user=user)
+
+    try:
+        quantity = int(request.POST.get("quantity", 1))
+        if quantity < 1:
+            quantity = 1
+    except (ValueError, TypeError):
+        quantity = 1
+
+    cart_item, created = CartItem.objects.get_or_create(
+        cart=cart,
+        variant=product_variant,
+        defaults={"quantity": quantity, "price_at_time": product_variant.selling_price},
+    )
     if not created:
-        cart_item.quantity += 1
+        cart_item.quantity += quantity
         cart_item.price_at_time = product_variant.selling_price
         cart_item.save()
     messages.success(request, f"{product_variant.product.name} added to cart.")
-    return redirect(request.META.get('HTTP_REFERER', 'product_list'))
-@login_required
-def cart_view(request):
-    cart=get_object_or_404(Cart, user=request.user)
-    cart_items=CartItem.objects.filter(cart=cart).prefetch_related('variant__product','variant__images')
-    for item in cart_items:
-        cart_total = sum(item.get_total())
-    tax_amount = cart_total * 0.18
-    total_amount = cart_total + tax_amount
-    return render(request,'customer_templates/cartpage.html',{'cart_items': cart_items,'cart_total': cart_total,'tax_amount': tax_amount,'total_amount': total_amount})
+    return redirect(request.META.get("HTTP_REFERER", "product_list"))
+
 
 @login_required
-def update_cart_view(request,id):
-    if request.method == 'POST':
-        cart_item = get_object_or_404(CartItem, id=id, cart__user=request.user)
-        action = request.POST.get('action')
-        if action=="increase":
+def buy_now_view(request, variant_id):
+    """Adds product to cart and redirects directly to checkout"""
+    user = request.user
+    product_variant = get_object_or_404(ProductVariant, id=variant_id)
+    cart, _ = Cart.objects.get_or_create(user=user)
+
+    try:
+        quantity = int(request.POST.get("quantity", 1))
+        if quantity < 1:
+            quantity = 1
+    except (ValueError, TypeError):
+        quantity = 1
+
+    cart_item, created = CartItem.objects.get_or_create(
+        cart=cart,
+        variant=product_variant,
+        defaults={"quantity": quantity, "price_at_time": product_variant.selling_price},
+    )
+    if not created:
+        cart_item.quantity += quantity
+        cart_item.price_at_time = product_variant.selling_price
+        cart_item.save()
+    
+    messages.success(request, f"{product_variant.product.name} added to cart. Proceeding to checkout...")
+    return redirect("checkout")
+
+
+@login_required
+def cart_view(request):
+    cart = get_object_or_404(Cart, user=request.user)
+    cart_items = CartItem.objects.filter(cart=cart).prefetch_related(
+        "variant__product__subcategory", "variant__images"
+    )
+    cart_total = sum(item.get_total() for item in cart_items)
+    tax_amount = cart_total * 0.18
+    total_amount = cart_total + tax_amount
+    return render(
+        request,
+        "customer_templates/cartpage.html",
+        {
+            "cart_items": cart_items,
+            "cart_total": cart_total,
+            "tax_amount": tax_amount,
+            "total_amount": total_amount,
+        },
+    )
+
+
+@login_required
+def update_cart_view(request, cart_item_id):
+    if request.method == "POST":
+        cart_item = get_object_or_404(CartItem, id=cart_item_id, cart__user=request.user)
+        action = request.POST.get("action")
+        if action == "increase":
             cart_item.quantity += 1
             cart_item.price_at_time = cart_item.variant.selling_price
             cart_item.save()
-        elif action=="decrease":
+        elif action == "decrease":
             if cart_item.quantity > 1:
                 cart_item.quantity -= 1
                 cart_item.price_at_time = cart_item.variant.selling_price
                 cart_item.save()
             else:
                 cart_item.delete()
-    return redirect('cart_view')
+    return redirect("cart_view")
+
 
 @login_required
 def checkout_view(request):
-    cart=get_object_or_404(Cart, user=request.user)
-    cart_items=CartItem.objects.filter(cart=cart).prefetch_related('variant__product','variant__images')
-    context={'cart_items':cart_items}
-    return render(request,'customer_templates/checkout.html',context)
+    cart = get_object_or_404(Cart, user=request.user)
+    cart_items = CartItem.objects.filter(cart=cart).prefetch_related(
+        "variant__product__subcategory", "variant__images"
+    )
+
+    cart_total = sum(item.get_total() for item in cart_items)
+    tax_amount = cart_total * 0.18
+    total_amount = cart_total + tax_amount
+
+    amount_in_paise = int(total_amount * 100)
+
+    try:
+        client = razorpay.Client(
+            auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
+        )
+
+        payment = client.order.create(
+            {
+                "amount": amount_in_paise,
+                "currency": "INR",
+                "payment_capture": "1",
+                "receipt": f"order_{request.user.id}_{int(time.time())}",
+            }
+        )
+
+        order_obj = Order.objects.create(
+            user=request.user,
+            order_number=f"ORD-{request.user.id}-{int(time.time())}",
+            total_amount=total_amount,
+            payment_status="PENDING",
+            order_status="PENDING",
+        )
+
+        payment_order = PaymentOrder.objects.create(
+            order=order_obj,
+            amount=amount_in_paise,
+            razorpay_order_id=payment["id"],
+            user=request.user,
+            status="PENDING",
+        )
+
+        context = {
+            "cart_items": cart_items,
+            "cart_total": cart_total,
+            "tax_amount": tax_amount,
+            "total_amount": total_amount,
+            "payment": payment,
+            "razorpay_key": settings.RAZORPAY_KEY_ID,
+        }
+    except Exception as e:
+        messages.error(request, f"Payment initialization failed: {str(e)}")
+        context = {
+            "cart_items": cart_items,
+            "cart_total": cart_total,
+            "tax_amount": tax_amount,
+            "total_amount": total_amount,
+            "error": str(e),
+        }
+
+    return render(request, "customer_templates/checkout.html", context)
+
 
 @login_required
-def remove_from_cart_view(request, id):
-    cart_item=get_object_or_404(CartItem, id=id, cart__user=request.user)
+def remove_from_cart_view(request, cart_item_id):
+    cart_item = get_object_or_404(CartItem, id=cart_item_id, cart__user=request.user)
     cart_item.delete()
     messages.success(request, "Product removed from cart.")
-    return redirect('cart_view')
-    
-@login_required
-def checkout_view(request):
-    return render(request,'customer_templates/checkout.html')
-#-----------------------------------------------------------------------------
-#address----------------------------------------------------------------------
+    return redirect("cart_view")
+
+
+# -----------------------------------------------------------------------------
+# address----------------------------------------------------------------------
 @login_required
 def add_address_view(request):
-    if request.method == 'POST':
+    if request.method == "POST":
         has_addresses = Address.objects.filter(user=request.user).exists()
-        first_name = request.POST.get('first_name')
-        last_name = request.POST.get('last_name')
+        first_name = request.POST.get("first_name")
+        last_name = request.POST.get("last_name")
         full_name = f"{first_name} {last_name}"
-        phone_number = request.POST.get('phone_number')
-        locality = request.POST.get('locality')
-        city = request.POST.get('city')
-        state = request.POST.get('state')
-        pincode = request.POST.get('pincode')
-        country = request.POST.get('country')
-        house_info = request.POST.get('house_info')
-        landmark = request.POST.get('landmark')
-        address_type = request.POST.get('address_type')
-        is_default_checked = request.POST.get('is_default') == 'on'
+        phone_number = request.POST.get("phone_number")
+        locality = request.POST.get("locality")
+        city = request.POST.get("city")
+        state = request.POST.get("state")
+        pincode = request.POST.get("pincode")
+        country = request.POST.get("country")
+        house_info = request.POST.get("house_info")
+        landmark = request.POST.get("landmark")
+        address_type = request.POST.get("address_type")
+        is_default_checked = request.POST.get("is_default") == "on"
 
         if not has_addresses:
             is_default_checked = True
 
         if is_default_checked:
-            Address.objects.filter(user=request.user, is_default=True).update(is_default=False)
+            Address.objects.filter(user=request.user, is_default=True).update(
+                is_default=False
+            )
 
         Address.objects.create(
             user=request.user,
@@ -189,101 +441,206 @@ def add_address_view(request):
             house_info=house_info,
             landmark=landmark,
             address_type=address_type,
-            is_default=is_default_checked
+            is_default=is_default_checked,
         )
         messages.success(request, "Address added successfully.")
-        return redirect('address')
-    return redirect('address')
+        return redirect("address")
+    return redirect("address")
+
 
 @login_required
 def address_view(request):
-    user_address = Address.objects.filter(user=request.user).order_by('-is_default', '-created_at')
-    return render(request,'customer_templates/addresspage.html',{'addresses': user_address})
+    user_address = Address.objects.filter(user=request.user).order_by(
+        "-is_default", "-created_at"
+    )
+    return render(
+        request, "customer_templates/addresspage.html", {"addresses": user_address}
+    )
+
 
 @login_required
 def update_address_view(request):
-    if request.method == 'POST':
-        address_id = request.POST.get('address_id')
+    if request.method == "POST":
+        address_id = request.POST.get("address_id")
         address = get_object_or_404(Address, id=address_id, user=request.user)
-        first_name = request.POST.get('first_name', '')
-        last_name = request.POST.get('last_name', '')
+        first_name = request.POST.get("first_name", "")
+        last_name = request.POST.get("last_name", "")
         full_name = f"{first_name} {last_name}".strip()
-        is_default_checked = request.POST.get('is_default') == 'on'
+        is_default_checked = request.POST.get("is_default") == "on"
         if address.is_default and not is_default_checked:
-            messages.error(request, "You cannot unset your default address directly. Please set another address as default instead.")
-            return redirect('address')
+            messages.error(
+                request,
+                "You cannot unset your default address directly. Please set another address as default instead.",
+            )
+            return redirect("address")
         if is_default_checked and not address.is_default:
-            Address.objects.filter(user=request.user, is_default=True).update(is_default=False)
+            Address.objects.filter(user=request.user, is_default=True).update(
+                is_default=False
+            )
         address.full_name = full_name
-        address.phone_number = request.POST.get('phone_number')
-        address.locality = request.POST.get('locality')
-        address.city = request.POST.get('city')
-        address.state = request.POST.get('state')
-        address.pincode = request.POST.get('pincode')
-        address.country = request.POST.get('country')
-        address.house_info = request.POST.get('house_info')
-        address.landmark = request.POST.get('landmark', '')
-        address.address_type = request.POST.get('address_type')
+        address.phone_number = request.POST.get("phone_number")
+        address.locality = request.POST.get("locality")
+        address.city = request.POST.get("city")
+        address.state = request.POST.get("state")
+        address.pincode = request.POST.get("pincode")
+        address.country = request.POST.get("country")
+        address.house_info = request.POST.get("house_info")
+        address.landmark = request.POST.get("landmark", "")
+        address.address_type = request.POST.get("address_type")
         address.is_default = is_default_checked
         address.save()
         messages.success(request, f"Address updated successfully.")
-        return redirect('address')
-    return redirect('address')
+        return redirect("address")
+    return redirect("address")
+
+
 @login_required
 def delete_address_view(request, address_id):
     address = get_object_or_404(Address, id=address_id, user=request.user)
     address.delete()
     messages.success(request, "Address deleted successfully.")
-    return redirect('address')
+    return redirect("address")
+
+
 @login_required
 def set_default_address_view(request):
-    if request.method == 'POST':
-        address_id = request.POST.get('address_id')
+    if request.method == "POST":
+        address_id = request.POST.get("address_id")
         if address_id:
             address = get_object_or_404(Address, id=address_id, user=request.user)
-            Address.objects.filter(user=request.user, is_default=True).update(is_default=False)
+            Address.objects.filter(user=request.user, is_default=True).update(
+                is_default=False
+            )
             address.is_default = True
             address.save()
             messages.success(request, "Default address set successfully.")
         else:
             messages.error(request, "No address selected to set as default.")
-    return redirect('address')
-#------------------------------------------------------------------------------
+    return redirect("address")
 
-#product_view_user-------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
+
+# product_view_user-------------------------------------------------------------------
 def product_list_view(request):
-    product_var = ProductVariant.objects.select_related('product').prefetch_related('images').all()
-    try:
-        if request.user.is_authenticated:
-            cart = Cart.objects.filter(user=request.user).first()
-            if cart:
-                cart_items = CartItem.objects.filter(cart=cart).prefetch_related('variant__product', 'variant__images')  
-            else:
-                cart_items=CartItem.objects.none()
-            wishlist = Wishlist.objects.filter(user=request.user, is_default=True).first()
-            if wishlist:
-                wishlist_items = WishlistItem.objects.filter(wishlist=wishlist).prefetch_related('variant__product', 'variant__images') 
-            else:
-                wishlist_items=WishlistItem.objects.none()
-            return render(request, 'customer_templates/product_page.html', {"product_var": product_var,"cart_items": cart_items,"wishlist": wishlist_items})
-    except:
-        return redirect('login')
-    return render(request, 'customer_templates/product_page.html', {"product_var": product_var})
-def product_single_view(request,id):
-    product_var=ProductVariant.objects.get(id=id)
-    cart=Cart.objects.filter(user=request.user).first()
-    cart_items=CartItem.objects.filter(cart=cart).prefetch_related('variant__product','variant__images')
-    return render(request,'customer_templates/productsinglepage.html',{"variant":product_var,"cart_items":cart_items})
-#----------------------------------------------------------------------------------------------------
+    product_var_all = (
+        ProductVariant.objects.select_related("product__subcategory__category")
+        .prefetch_related("images")
+        .filter(product__approval_status="approved")
 
-#order---------------------------------------------------------------------------
-def orderhistory_view(request):
-    return render(request,'customer_templates/order_history_customer.html')
-#--------------------------------------------------------------------------------
+    )
+    categories = Category.objects.all()
+    cart_variant_ids = []
+    wishlist_variant_ids = []
+    cart_items = []
+
+    paginator = Paginator(product_var_all, 12)
+    page_number = request.GET.get("page", 1)
+
+    try:
+        product_var = paginator.page(page_number)
+    except PageNotAnInteger:
+        product_var = paginator.page(1)
+    except EmptyPage:
+        product_var = paginator.page(paginator.num_pages)
+
+    if request.user.is_authenticated:
+        cart = Cart.objects.filter(user=request.user).first()
+        if cart:
+            cart_items = CartItem.objects.filter(cart=cart).prefetch_related(
+                "variant__product__subcategory", "variant__images"
+            )
+            cart_variant_ids = list(cart_items.values_list("variant_id", flat=True))
+
+        wishlist = Wishlist.objects.filter(user=request.user, is_default=True).first()
+        if wishlist:
+            wishlist_items = WishlistItem.objects.filter(
+                wishlist=wishlist
+            ).prefetch_related("variant__product__subcategory", "variant__images")
+            wishlist_variant_ids = list(
+                wishlist_items.values_list("variant_id", flat=True)
+            )
+
+    return render(
+        request,
+        "customer_templates/product_page.html",
+        {
+            "product_var": product_var,
+            "cart_items": cart_items,
+            "cart_variant_ids": cart_variant_ids,
+            "wishlist_variant_ids": wishlist_variant_ids,
+            "categories": categories,
+            "paginator": paginator,
+            "page_obj": product_var,
+        },
+    )
+
+
+def product_single_view(request, variant_id):
+    product_var = (
+        ProductVariant.objects.select_related("product__subcategory__category")
+        .prefetch_related("images")
+        .get(id=variant_id)
+    )
+    category = Category.objects.filter()
+    
+    cart_items = []
+    wishlist_variant_ids = []
+    cart_variant_ids = []
+
+    if request.user.is_authenticated:
+        cart = Cart.objects.filter(user=request.user).first()
+        if cart:
+            cart_items = CartItem.objects.filter(cart=cart).prefetch_related(
+                "variant__product__subcategory", "variant__images"
+            )
+            cart_variant_ids = list(
+                CartItem.objects.filter(cart=cart).values_list("variant_id", flat=True)
+            )
+        
+        wishlist_variant_ids = list(
+            WishlistItem.objects.filter(wishlist__user=request.user).values_list(
+                "variant_id", flat=True
+            )
+        )
+
+    return render(
+        request,
+        "customer_templates/productsinglepage.html",
+        {
+            "variant": product_var,
+            "cart_items": cart_items,
+            "wishlist_variant_ids": wishlist_variant_ids,
+            "cart_variant_ids": cart_variant_ids,
+            "category": category,
+        },
+    )
+
+
+# ----------------------------------------------------------------------------------------------------
+
+# order---------------------------------------------------------------------------
+@login_required
+def order_history_view(request):
+    orders = (
+        Order.objects.filter(user=request.user)
+        .prefetch_related("items__variant__product", "items__variant__images")
+        .order_by("-ordered_at")
+    )
+
+    context = {
+        "orders": orders,
+    }
+    return render(request, "customer_templates/order_history_customer.html", context)
+
+
+# --------------------------------------------------------------------------------
 
 # customer dashboard-------------------------------------------------------------
 def customer_dashboard_view(request):
-    return render(request,'customer_templates/customer_dashboard.html')
-#----------------------------------------------------------------------------------
+    return render(request, "customer_templates/customer_dashboard.html")
+
+
+# ----------------------------------------------------------------------------------
 
 # Create your views here.
