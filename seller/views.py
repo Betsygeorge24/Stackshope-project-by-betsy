@@ -458,4 +458,6 @@ def update_order_status(request):
             order.save()
 
     return redirect("seller_customers_orders")
+def seller_analytics(request):
+    return render(request,'seller_templates/selleranalytics.html')
 
