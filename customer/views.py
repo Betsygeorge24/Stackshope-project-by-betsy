@@ -5,7 +5,7 @@ from core.decorators import customer_required
 from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Avg, Sum
-from seller.models import Product, ProductVariant,InventoryLog
+from seller.models import Product, ProductVariant, InventoryLog
 from customer.models import (
     Wishlist,
     WishlistItem,
@@ -122,6 +122,23 @@ def order_success(request):
     except Exception as e:
         messages.error(request, f"An error occurred: {str(e)}")
         return redirect("cart_view")
+
+
+@customer_required
+def order_success_cod(request, order_id):
+    """Display order success page for COD orders"""
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+    
+    cart = Cart.objects.get(user=request.user)
+    cart.items.all().delete()
+    
+    context = {
+        "order": order,
+        "order_amount": order.total_amount,
+        "payment_method": order.payment_method,
+        "is_cod": True,
+    }
+    return render(request, "customer_templates/order_success.html", context)
 
 
 # userlogin-----------------------------------------------------------------------------
@@ -443,15 +460,76 @@ def checkout_view(request):
     tax_amount = cart_total * 0.18
     total_amount = cart_total + tax_amount
 
-    amount_in_paise = int(total_amount * 100)
-
-    # Get selected address ID from POST request or use default
+    # Get selected address ID and payment method from POST request
     selected_address_id = request.POST.get('address_id')
+    payment_method = request.POST.get('payment_method', 'online')
+    
     if selected_address_id:
         selected_address = user_addresses.filter(id=selected_address_id).first()
     else:
         selected_address = default_address
 
+    context = {
+        "cart_items": cart_items,
+        "cart_total": cart_total,
+        "tax_amount": tax_amount,
+        "total_amount": total_amount,
+        "user_addresses": user_addresses,
+        "default_address": default_address,
+        "selected_address": selected_address,
+        "payment_method": payment_method,
+    }
+
+    if request.method == 'POST' and payment_method == 'cod':
+        # Handle Cash on Delivery
+        selected_address_id = request.POST.get('address_id')
+        if not selected_address_id:
+            messages.error(request, "Please select a delivery address.")
+            return render(request, "customer_templates/checkout.html", context)
+
+        selected_address = get_object_or_404(Address, id=selected_address_id, user=request.user)
+
+        # Create COD order
+        order_obj = Order.objects.create(
+            user=request.user,
+            address=selected_address,
+            order_number=f"COD-ORD-{request.user.id}-{int(time.time())}",
+            total_amount=total_amount,
+            payment_method='cod',
+            payment_status="PENDING",
+            order_status="CONFIRMED",  # COD orders are auto-confirmed
+        )
+
+        # Create OrderItems and decrease stock
+        for cart_item in cart_items:
+            # Decrease stock quantity
+            cart_item.variant.stock_quantity -= cart_item.quantity
+            
+            # Create inventory log
+            InventoryLog.objects.create(
+                variant=cart_item.variant,
+                change_amount=-cart_item.quantity,
+                reason="COD Order fulfillment",
+                performed_by=request.user
+            )
+            
+            cart_item.variant.save()
+            
+            OrderItem.objects.create(
+                order=order_obj,
+                variant=cart_item.variant,
+                seller=cart_item.variant.product.seller,
+                quantity=cart_item.quantity,
+                price_at_purchase=cart_item.price_at_time,
+            )
+
+        # Clear cart
+        cart_items.delete()
+
+        messages.success(request, "Order placed successfully! Cash on Delivery confirmed.")
+        return redirect("order_success_cod", order_id=order_obj.id)
+
+    # For online payment
     try:
         client = razorpay.Client(
             auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
@@ -459,7 +537,7 @@ def checkout_view(request):
 
         payment = client.order.create(
             {
-                "amount": amount_in_paise,
+                "amount": int(total_amount * 100),
                 "currency": "INR",
                 "payment_capture": "1",
                 "receipt": f"order_{request.user.id}_{int(time.time())}",
@@ -471,41 +549,28 @@ def checkout_view(request):
             address=selected_address,
             order_number=f"ORD-{request.user.id}-{int(time.time())}",
             total_amount=total_amount,
+            payment_method='online',
             payment_status="PENDING",
             order_status="PENDING",
         )
 
         payment_order = PaymentOrder.objects.create(
             order=order_obj,
-            amount=amount_in_paise,
+            amount=int(total_amount * 100),
             razorpay_order_id=payment["id"],
             user=request.user,
             status="PENDING",
         )
 
-        context = {
-            "cart_items": cart_items,
-            "cart_total": cart_total,
-            "tax_amount": tax_amount,
-            "total_amount": total_amount,
+        context.update({
             "payment": payment,
             "razorpay_key": settings.RAZORPAY_KEY_ID,
-            "user_addresses": user_addresses,
-            "default_address": default_address,
-            "selected_address": selected_address,
-        }
+            "order": order_obj,
+        })
+
     except Exception as e:
         messages.error(request, f"Payment initialization failed: {str(e)}")
-        context = {
-            "cart_items": cart_items,
-            "cart_total": cart_total,
-            "tax_amount": tax_amount,
-            "total_amount": total_amount,
-            "error": str(e),
-            "user_addresses": user_addresses,
-            "default_address": default_address,
-            "selected_address": selected_address,
-        }
+        context["error"] = str(e)
 
     return render(request, "customer_templates/checkout.html", context)
 
@@ -637,6 +702,7 @@ def set_default_address_view(request):
 
 
 # ------------------------------------------------------------------------------
+
 
 # product_view_user-------------------------------------------------------------------
 def product_list_view(request):
@@ -808,6 +874,7 @@ def submit_review(request, variant_id):
 
 # ----------------------------------------------------------------------------------------------------
 
+
 # order---------------------------------------------------------------------------
 @customer_required
 def order_history_view(request):
@@ -851,6 +918,7 @@ def my_reviews_view(request):
 
 # --------------------------------------------------------------------------------
 
+
 # customer dashboard-------------------------------------------------------------
 @customer_required
 def customer_dashboard_view(request):
@@ -877,4 +945,6 @@ def customer_dashboard_view(request):
 
 # ----------------------------------------------------------------------------------
 
+
 # Create your views here.
+

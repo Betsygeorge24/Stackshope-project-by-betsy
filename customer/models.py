@@ -71,10 +71,16 @@ class Review(models.Model):
         return cls.objects.filter(user=user, product=product).first()
 
 class Order(models.Model):
+    PAYMENT_CHOICES = [
+        ('online', 'Online Payment'),
+        ('cod', 'Cash on Delivery'),
+    ]
+    
     user = models.ForeignKey("core.CustomUser", on_delete=models.CASCADE, related_name="orders")
     address = models.ForeignKey("core.Address", on_delete=models.SET_NULL, null=True, blank=True, related_name="orders")
     order_number = models.CharField(max_length=100, unique=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_CHOICES, default='online')
     payment_status = models.CharField(max_length=20)
     order_status = models.CharField(max_length=20)
     ordered_at = models.DateTimeField(auto_now_add=True)
