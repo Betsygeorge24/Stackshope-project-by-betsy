@@ -216,7 +216,43 @@ def manage_variants(request, product_id):
     attributes = Attribute.objects.filter(subcategory=product.subcategory).prefetch_related("options")
     variants = product.variants.prefetch_related("images", "attributes__option__attribute")
 
+    edit_variant = None
+    selected_option_ids = []
+
     if request.method == "POST":
+        edit_variant_id = request.POST.get("edit_variant_id")
+        if edit_variant_id:
+            variant = get_object_or_404(ProductVariant, id=edit_variant_id, product=product)
+            variant.mrp = request.POST.get("mrp") or 0
+            variant.selling_price = request.POST.get("selling_price") or 0
+            variant.cost_price = request.POST.get("cost_price") or 0
+            variant.stock_quantity = request.POST.get("stock_quantity") or 0
+            variant.weight = request.POST.get("weight") or 0
+            variant.length = request.POST.get("length") or 0
+            variant.width = request.POST.get("width") or 0
+            variant.height = request.POST.get("height") or 0
+            variant.tax_percentage = request.POST.get("tax_percentage") or 0
+            variant.save()
+
+            VariantAttributeBridge.objects.filter(variant=variant).delete()
+            for attribute in attributes:
+                option_id = request.POST.get(f"attribute_{attribute.id}")
+                if option_id:
+                    VariantAttributeBridge.objects.create(variant=variant, option_id=option_id)
+
+            primary_image = request.FILES.get("primary_image")
+            if primary_image:
+                ProductImage.objects.filter(variant=variant, is_primary=True).delete()
+                ProductImage.objects.create(variant=variant, image_url=primary_image, is_primary=True)
+
+            additional_images = request.FILES.getlist("additional_images")
+            for image in additional_images:
+                ProductImage.objects.create(variant=variant, image_url=image, is_primary=False)
+
+            messages.success(request, "Variant updated successfully.")
+            return redirect("manage_variants", product_id=product.id)
+
+        # new variant create
         variant = ProductVariant.objects.create(
             product=product,
             mrp=request.POST.get("mrp") or 0,
@@ -246,10 +282,20 @@ def manage_variants(request, product_id):
         messages.success(request, "Variant added successfully.")
         return redirect("manage_variants", product_id=product.id)
 
+    # GET section: check whether user requested editing
+    edit_variant_id = request.GET.get("edit_variant_id")
+    if edit_variant_id:
+        edit_variant = get_object_or_404(ProductVariant, id=edit_variant_id, product=product)
+        selected_option_ids = list(
+            VariantAttributeBridge.objects.filter(variant=edit_variant).values_list("option_id", flat=True)
+        )
+
     return render(request, "seller_templates/manage_variants.html", {
         "product": product,
         "attributes": attributes,
         "variants": variants,
+        "edit_variant": edit_variant,
+        "selected_option_ids": selected_option_ids,
     })
 
 

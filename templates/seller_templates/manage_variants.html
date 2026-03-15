@@ -56,11 +56,19 @@
             <div class="lg:col-span-7">
                 <div class="bg-white rounded-3xl shadow-sm border border-muted/30 p-6 sm:p-8">
                     <h2 class="text-xl font-black text-dark mb-6 flex items-center gap-2">
-                        <span class="material-icons text-accent">add_circle</span> Create New Variant
+                        <span class="material-icons text-accent">add_circle</span>
+                        {% if edit_variant %}
+                            Edit Variant
+                        {% else %}
+                            Create New Variant
+                        {% endif %}
                     </h2>
                     
                     <form action="" method="POST" enctype="multipart/form-data" class="space-y-8">
                         {% csrf_token %}
+                        {% if edit_variant %}
+                            <input type="hidden" name="edit_variant_id" value="{{ edit_variant.id }}" />
+                        {% endif %}
                         
                         <div class="space-y-4">
                             <h3 class="text-xs font-black text-muted uppercase tracking-widest border-b border-muted/20 pb-2 flex items-center gap-2">
@@ -69,15 +77,15 @@
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                     <label class="block text-[10px] font-black uppercase tracking-widest text-muted mb-2">Cost Price (₹)</label>
-                                    <input name="cost_price" required placeholder="0.00" type="number" step="0.01" class="w-full px-4 py-3 bg-light/30 border border-muted/50 rounded-xl text-sm font-extrabold text-dark focus:outline-none focus:ring-2 focus:ring-dark focus:border-transparent placeholder-muted/60 transition-all" />
+                                    <input name="cost_price" required placeholder="0.00" value="{{ edit_variant.cost_price|default:'' }}" type="number" step="0.01" class="w-full px-4 py-3 bg-light/30 border border-muted/50 rounded-xl text-sm font-extrabold text-dark focus:outline-none focus:ring-2 focus:ring-dark focus:border-transparent placeholder-muted/60 transition-all" />
                                 </div>
                                 <div>
                                     <label class="block text-[10px] font-black uppercase tracking-widest text-muted mb-2">MRP (₹)</label>
-                                    <input name="mrp" required placeholder="0.00" type="number" step="0.01" class="w-full px-4 py-3 bg-light/30 border border-muted/50 rounded-xl text-sm font-extrabold text-dark focus:outline-none focus:ring-2 focus:ring-dark focus:border-transparent placeholder-muted/60 transition-all" />
+                                    <input name="mrp" required placeholder="0.00" value="{{ edit_variant.mrp|default:'' }}" type="number" step="0.01" class="w-full px-4 py-3 bg-light/30 border border-muted/50 rounded-xl text-sm font-extrabold text-dark focus:outline-none focus:ring-2 focus:ring-dark focus:border-transparent placeholder-muted/60 transition-all" />
                                 </div>
                                 <div>
                                     <label class="block text-[10px] font-black uppercase tracking-widest text-dark mb-2">Selling Price (₹)</label>
-                                    <input name="selling_price" required placeholder="0.00" type="number" step="0.01" class="w-full px-4 py-3 bg-accent/10 border border-accent/50 rounded-xl text-sm font-extrabold text-dark focus:outline-none focus:ring-2 focus:ring-dark focus:border-transparent placeholder-muted/60 transition-all" />
+                                    <input name="selling_price" required placeholder="0.00" value="{{ edit_variant.selling_price|default:'' }}" type="number" step="0.01" class="w-full px-4 py-3 bg-accent/10 border border-accent/50 rounded-xl text-sm font-extrabold text-dark focus:outline-none focus:ring-2 focus:ring-dark focus:border-transparent placeholder-muted/60 transition-all" />
                                 </div>
                             </div>
                         </div>
@@ -89,27 +97,27 @@
                             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 <div class="col-span-2">
                                     <label class="block text-[10px] font-black uppercase tracking-widest text-muted mb-2">Stock Quantity</label>
-                                    <input name="stock_quantity" required placeholder="0" type="number" class="w-full px-4 py-3 bg-light/30 border border-muted/50 rounded-xl text-sm font-extrabold text-dark focus:outline-none focus:ring-2 focus:ring-dark focus:border-transparent placeholder-muted/60 transition-all" />
+                                    <input name="stock_quantity" required placeholder="0" value="{{ edit_variant.stock_quantity|default:'' }}" type="number" class="w-full px-4 py-3 bg-light/30 border border-muted/50 rounded-xl text-sm font-extrabold text-dark focus:outline-none focus:ring-2 focus:ring-dark focus:border-transparent placeholder-muted/60 transition-all" />
                                 </div>
                                 <div class="col-span-2">
                                     <label class="block text-[10px] font-black uppercase tracking-widest text-muted mb-2">Tax Percentage (%)</label>
-                                    <input name="tax_percentage" required placeholder="18.0" type="number" step="0.1" class="w-full px-4 py-3 bg-light/30 border border-muted/50 rounded-xl text-sm font-extrabold text-dark focus:outline-none focus:ring-2 focus:ring-dark focus:border-transparent placeholder-muted/60 transition-all" />
+                                    <input name="tax_percentage" required placeholder="18.0" value="{{ edit_variant.tax_percentage|default:'' }}" type="number" step="0.1" class="w-full px-4 py-3 bg-light/30 border border-muted/50 rounded-xl text-sm font-extrabold text-dark focus:outline-none focus:ring-2 focus:ring-dark focus:border-transparent placeholder-muted/60 transition-all" />
                                 </div>
                                 <div>
                                     <label class="block text-[10px] font-black uppercase tracking-widest text-muted mb-2">Weight (kg)</label>
-                                    <input name="weight" required placeholder="0.00" type="number" step="0.01" class="w-full px-4 py-3 bg-light/30 border border-muted/50 rounded-xl text-sm font-bold text-dark focus:outline-none focus:ring-2 focus:ring-dark focus:border-transparent placeholder-muted/60 transition-all" />
+                                    <input name="weight" required placeholder="0.00" value="{{ edit_variant.weight|default:'' }}" type="number" step="0.01" class="w-full px-4 py-3 bg-light/30 border border-muted/50 rounded-xl text-sm font-bold text-dark focus:outline-none focus:ring-2 focus:ring-dark focus:border-transparent placeholder-muted/60 transition-all" />
                                 </div>
                                 <div>
                                     <label class="block text-[10px] font-black uppercase tracking-widest text-muted mb-2">Length (cm)</label>
-                                    <input name="length" required placeholder="0.0" type="number" step="0.1" class="w-full px-4 py-3 bg-light/30 border border-muted/50 rounded-xl text-sm font-bold text-dark focus:outline-none focus:ring-2 focus:ring-dark focus:border-transparent placeholder-muted/60 transition-all" />
+                                    <input name="length" required placeholder="0.0" value="{{ edit_variant.length|default:'' }}" type="number" step="0.1" class="w-full px-4 py-3 bg-light/30 border border-muted/50 rounded-xl text-sm font-bold text-dark focus:outline-none focus:ring-2 focus:ring-dark focus:border-transparent placeholder-muted/60 transition-all" />
                                 </div>
                                 <div>
                                     <label class="block text-[10px] font-black uppercase tracking-widest text-muted mb-2">Width (cm)</label>
-                                    <input name="width" required placeholder="0.0" type="number" step="0.1" class="w-full px-4 py-3 bg-light/30 border border-muted/50 rounded-xl text-sm font-bold text-dark focus:outline-none focus:ring-2 focus:ring-dark focus:border-transparent placeholder-muted/60 transition-all" />
+                                    <input name="width" required placeholder="0.0" value="{{ edit_variant.width|default:'' }}" type="number" step="0.1" class="w-full px-4 py-3 bg-light/30 border border-muted/50 rounded-xl text-sm font-bold text-dark focus:outline-none focus:ring-2 focus:ring-dark focus:border-transparent placeholder-muted/60 transition-all" />
                                 </div>
                                 <div>
                                     <label class="block text-[10px] font-black uppercase tracking-widest text-muted mb-2">Height (cm)</label>
-                                    <input name="height" required placeholder="0.0" type="number" step="0.1" class="w-full px-4 py-3 bg-light/30 border border-muted/50 rounded-xl text-sm font-bold text-dark focus:outline-none focus:ring-2 focus:ring-dark focus:border-transparent placeholder-muted/60 transition-all" />
+                                    <input name="height" required placeholder="0.0" value="{{ edit_variant.height|default:'' }}" type="number" step="0.1" class="w-full px-4 py-3 bg-light/30 border border-muted/50 rounded-xl text-sm font-bold text-dark focus:outline-none focus:ring-2 focus:ring-dark focus:border-transparent placeholder-muted/60 transition-all" />
                                 </div>
                             </div>
                         </div>
@@ -126,7 +134,7 @@
                                         <select name="attribute_{{ attribute.id }}" class="w-full px-4 py-3 bg-light/30 border border-muted/50 rounded-xl text-sm font-bold text-dark focus:outline-none focus:ring-2 focus:ring-dark focus:border-transparent appearance-none transition-all cursor-pointer">
                                             <option value="" disabled selected>-- Choose {{ attribute.name }} --</option>
                                             {% for option in attribute.options.all %}
-                                                <option value="{{ option.id }}">{{ option.value }}</option>
+                                                <option value="{{ option.id }}" {% if option.id in selected_option_ids %}selected{% endif %}>{{ option.value }}</option>
                                             {% endfor %}
                                         </select>
                                         <span class="material-icons absolute right-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none">expand_more</span>
@@ -156,10 +164,18 @@
                             </div>
                         </div>
 
-                        <div class="pt-4 border-t border-muted/20">
+                        <div class="pt-4 border-t border-muted/20 flex items-center gap-3">
                             <button type="submit" class="w-full bg-dark text-light px-6 py-4 rounded-xl text-sm font-black uppercase tracking-widest hover:bg-accent hover:text-dark transition-all duration-200 active:scale-95 shadow-md flex items-center justify-center gap-2">
-                                <span class="material-icons text-[18px]">add_task</span> Save New Variant
+                                <span class="material-icons text-[18px]">add_task</span>
+                                {% if edit_variant %}
+                                    Update Variant
+                                {% else %}
+                                    Save New Variant
+                                {% endif %}
                             </button>
+                            {% if edit_variant %}
+                            <a href="{% url 'manage_variants' product.id %}" class="inline-flex items-center justify-center gap-1 px-4 py-3 rounded-xl border border-muted text-muted hover:text-dark hover:border-dark transition-all font-bold text-xs">Cancel</a>
+                            {% endif %}
                         </div>
                     </form>
                 </div>
@@ -174,16 +190,31 @@
                     
                     <div class="space-y-4 max-h-[70vh] overflow-y-auto hide-scrollbar pr-1">
                         {% for variant in variants %}
-                        <div class="bg-light/30 border border-muted/30 rounded-2xl p-5 hover:border-dark/40 transition-colors group relative">
+                        <div class="bg-light/30 border border-muted/30 rounded-2xl p-5 hover:border-dark/40 transition-colors group relative"
+                             data-sku="{{ variant.sku_code }}"
+                             data-cost="{{ variant.cost_price }}"
+                             data-mrp="{{ variant.mrp }}"
+                             data-selling="{{ variant.selling_price }}"
+                             data-stock="{{ variant.stock_quantity }}"
+                             data-tax="{{ variant.tax_percentage }}"
+                             data-weight="{{ variant.weight }}"
+                             data-dims="{{ variant.length }} x {{ variant.width }} x {{ variant.height }}"
+                             data-attributes="{% for va in variant.attributes.all %}{{ va.option.attribute.name }}:{{ va.option.value }}{% if not forloop.last %}, {% endif %}{% endfor %}"
+                             data-image="{% if variant.images.first %}{{ variant.images.first.image_url.url }}{% else %}{{ '' }}{% endif %}" >
                             
                             <div class="flex justify-between items-start mb-4">
                                 <div>
                                     <span class="text-[9px] font-black uppercase tracking-widest text-muted block mb-0.5">SKU Code</span>
                                     <p class="font-extrabold text-dark text-base">{{ variant.sku_code }}</p>
                                 </div>
-                                <a href="#" class="w-8 h-8 rounded-full bg-white border border-muted/30 flex items-center justify-center text-muted hover:text-dark hover:border-dark transition-colors shadow-sm">
-                                    <span class="material-icons text-[16px]">edit</span>
-                                </a>
+                                <div class="flex gap-2">
+                                    <button type="button" class="variant-view-btn w-8 h-8 rounded-full bg-white border border-muted/30 flex items-center justify-center text-muted hover:text-dark hover:border-dark transition-colors shadow-sm" title="View full variant info">
+                                        <span class="material-icons text-[16px]">visibility</span>
+                                    </button>
+                                    <a href="{% url 'manage_variants' product.id %}?edit_variant_id={{ variant.id }}" class="w-8 h-8 rounded-full bg-white border border-muted/30 flex items-center justify-center text-muted hover:text-dark hover:border-dark transition-colors shadow-sm" title="Edit variant">
+                                        <span class="material-icons text-[16px]">edit</span>
+                                    </a>
+                                </div>
                             </div>
 
                             <div class="flex items-center gap-4 mb-4">
@@ -243,6 +274,78 @@
             
         </div>
     </main>
+
+    <!-- Variant details modal -->
+    <div id="variantDetailsModal" class="fixed inset-0 z-50 bg-black/30 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl border border-muted/40 max-w-xl w-full overflow-hidden">
+            <div class="flex items-center justify-between p-4 border-b border-muted/30">
+                <h3 class="font-black text-lg">Variant Details</h3>
+                <button id="variantDetailsClose" type="button" class="text-muted hover:text-dark">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            <div class="p-4 space-y-3 text-sm text-dark">
+                <p><span class="font-black">SKU:</span> <span id="variantDetailsSku"></span></p>
+                <p><span class="font-black">Price:</span> ₹<span id="variantDetailsSelling"></span> (MRP: ₹<span id="variantDetailsMrp"></span>, Cost: ₹<span id="variantDetailsCost"></span>)</p>
+                <p><span class="font-black">Stock:</span> <span id="variantDetailsStock"></span></p>
+                <p><span class="font-black">Tax:</span> <span id="variantDetailsTax"></span>%</p>
+                <p><span class="font-black">Weight:</span> <span id="variantDetailsWeight"></span> kg</p>
+                <p><span class="font-black">Dimensions (L×W×H):</span> <span id="variantDetailsDims"></span> cm</p>
+                <p><span class="font-black">Attributes:</span> <span id="variantDetailsAttrs"></span></p>
+                <p><span class="font-black">Image:</span> <a id="variantDetailsImage" href="#" class="text-accent underline" target="_blank">Open image</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.querySelectorAll('.variant-view-btn').forEach(function(button) {
+            button.addEventListener('click', function() {
+                var card = this.closest('[data-sku]');
+                if (!card) return;
+
+                document.getElementById('variantDetailsSku').textContent = card.dataset.sku || 'N/A';
+                document.getElementById('variantDetailsCost').textContent = card.dataset.cost || '0';
+                document.getElementById('variantDetailsMrp').textContent = card.dataset.mrp || '0';
+                document.getElementById('variantDetailsSelling').textContent = card.dataset.selling || '0';
+                document.getElementById('variantDetailsStock').textContent = card.dataset.stock || '0';
+                document.getElementById('variantDetailsTax').textContent = card.dataset.tax || '0';
+                document.getElementById('variantDetailsWeight').textContent = card.dataset.weight || '0';
+                document.getElementById('variantDetailsDims').textContent = card.dataset.dims || 'N/A';
+                document.getElementById('variantDetailsAttrs').textContent = card.dataset.attributes || 'None';
+                var imageUrl = card.dataset.image || '#';
+                var imageLink = document.getElementById('variantDetailsImage');
+                imageLink.href = imageUrl;
+                imageLink.textContent = imageUrl ? 'Open image' : 'No image';
+
+                var modal = document.getElementById('variantDetailsModal');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            });
+        });
+
+        function closeVariantDetails() {
+            var modal = document.getElementById('variantDetailsModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        document.getElementById('variantDetailsClose').addEventListener('click', closeVariantDetails);
+
+        document.getElementById('variantDetailsModal').addEventListener('click', function(event) {
+            if (event.target === this) {
+                closeVariantDetails();
+            }
+        });
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const modal = document.getElementById('variantDetailsModal');
+                if (!modal.classList.contains('hidden')) {
+                    closeVariantDetails();
+                }
+            }
+        });
+    </script>
 
 </body>
 </html>

@@ -104,7 +104,14 @@
                 {% for product in products %}
                     <div class="group transition-colors">
                         
-                        <div class="cursor-pointer hover:bg-light/30 p-4 lg:p-5 flex flex-col lg:grid lg:grid-cols-12 gap-4 lg:items-center transition-all" onclick="toggleVariants('{{ product.id }}')">
+                        <div class="cursor-pointer hover:bg-light/30 p-4 lg:p-5 flex flex-col lg:grid lg:grid-cols-12 gap-4 lg:items-center transition-all"
+                                 data-product-id="{{ product.id }}"
+                                 data-product-name="{{ product.name|escapejs }}"
+                                 data-product-category="{{ product.category.name|default:'General'|escapejs }}"
+                                 data-product-variants="{{ product.variants.count }}"
+                                 data-product-price="{{ product.variants.first.selling_price|default:'0.00' }}"
+                                 data-product-stock="{{ product.variants.first.stock_quantity|default:'0' }}"
+                                 onclick="toggleVariants('{{ product.id }}')">
                             
                             <div class="col-span-5 flex items-center gap-4 w-full">
                                 <div class="w-14 h-14 rounded-xl bg-light/50 border border-muted/30 overflow-hidden flex-shrink-0 flex items-center justify-center p-1">
@@ -140,7 +147,7 @@
                             </div>
 
                             <div class="col-span-3 flex justify-end items-center gap-2 w-full mt-2 lg:mt-0">
-                                <a href="{% url 'update_product' product.id %}" onclick="event.stopPropagation();" class="bg-accent/20 text-dark border border-accent/50 hover:bg-accent px-3 py-2 rounded-lg font-bold text-xs uppercase tracking-widest transition-colors active:scale-95 shadow-sm">
+<a href="{% url 'update_product' product.id %}" onclick="event.stopPropagation();" class="bg-accent/20 text-dark border border-accent/50 hover:bg-accent px-3 py-2 rounded-lg font-bold text-xs uppercase tracking-widest transition-colors active:scale-95 shadow-sm">
                                     Edit
                                 </a>
                                 
@@ -170,7 +177,18 @@
                             
                             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                                 {% for variant in product.variants.all %}
-                                <div class="bg-white p-3 rounded-xl border border-muted/30 flex gap-3 items-center shadow-sm hover:border-dark/30 transition-colors">
+                                <div class="variant-card bg-white p-3 rounded-xl border border-muted/30 flex gap-3 items-center shadow-sm hover:border-dark/30 transition-colors" 
+                                     data-variant-id="{{ variant.id }}"
+                                     data-variant-sku="{{ variant.sku_code }}"
+                                     data-variant-selling="{{ variant.selling_price }}"
+                                     data-variant-mrp="{{ variant.mrp }}"
+                                     data-variant-cost="{{ variant.cost_price }}"
+                                     data-variant-stock="{{ variant.stock_quantity }}"
+                                     data-variant-tax="{{ variant.tax_percentage }}"
+                                     data-variant-weight="{{ variant.weight }}"
+                                     data-variant-dims="{{ variant.length }} x {{ variant.width }} x {{ variant.height }}"
+                                     data-variant-attributes="{% for va in variant.attributes.all %}{{ va.option.attribute.name }}:{{ va.option.value }}{% if not forloop.last %}, {% endif %}{% endfor %}"
+                                     data-variant-image="{% if variant.images.first %}{{ variant.images.first.image_url.url }}{% endif %}">
                                     
                                     <div class="w-12 h-12 rounded-lg bg-light border border-muted/20 overflow-hidden p-0.5 flex-shrink-0">
                                         {% if variant.images.first %}
@@ -192,6 +210,7 @@
                                             <div class="bg-red-50 text-red-600 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest mb-1 border border-red-100">Out of Stock</div>
                                         {% endif %}
                                         <div class="text-[9px] font-bold text-muted line-through">MRP: ₹{{ variant.mrp }}</div>
+                                        <button type="button" class="variant-view-btn text-blue-600 hover:text-blue-800 mt-1 text-xs font-black uppercase tracking-widest" onclick="event.stopPropagation();">View</button>
                                     </div>
                                 </div>
                                 {% endfor %}
@@ -265,21 +284,111 @@
     </footer>
 
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            function closeVariantDetails() {
+                const modal = document.getElementById('variantDetailsModal');
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+
+            function openVariantDetails(variantCard) {
+                document.getElementById('variantDetailsSku').textContent = variantCard.dataset.variantSku || 'N/A';
+                document.getElementById('variantDetailsCost').textContent = variantCard.dataset.variantCost || '0.00';
+                document.getElementById('variantDetailsMrp').textContent = variantCard.dataset.variantMrp || '0.00';
+                document.getElementById('variantDetailsSelling').textContent = variantCard.dataset.variantSelling || '0.00';
+                document.getElementById('variantDetailsStock').textContent = variantCard.dataset.variantStock || '0';
+                document.getElementById('variantDetailsTax').textContent = variantCard.dataset.variantTax || '0';
+                document.getElementById('variantDetailsWeight').textContent = variantCard.dataset.variantWeight || '0.00';
+                document.getElementById('variantDetailsDims').textContent = variantCard.dataset.variantDims || 'N/A';
+                document.getElementById('variantDetailsAttrs').textContent = variantCard.dataset.variantAttributes || 'None';
+
+                const imgUrl = variantCard.dataset.variantImage || '';
+                const imgLink = document.getElementById('variantDetailsImage');
+                if (imgUrl) {
+                    imgLink.href = imgUrl;
+                    imgLink.textContent = 'Open image';
+                    imgLink.classList.remove('text-muted');
+                } else {
+                    imgLink.href = '#';
+                    imgLink.textContent = 'No image';
+                    imgLink.classList.add('text-muted');
+                }
+
+                const modal = document.getElementById('variantDetailsModal');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+
+            document.querySelectorAll('.variant-view-btn').forEach(function(button) {
+                button.addEventListener('click', function(event) {
+                    event.stopPropagation();
+                    const variantCard = this.closest('.variant-card');
+                    if (!variantCard) return;
+                    openVariantDetails(variantCard);
+                });
+            });
+
+            const closeBtn = document.getElementById('variantDetailsClose');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function(event) {
+                    event.stopPropagation();
+                    closeVariantDetails();
+                });
+            }
+
+            const modal = document.getElementById('variantDetailsModal');
+            if (modal) {
+                modal.addEventListener('click', function(event) {
+                    if (event.target === this) {
+                        closeVariantDetails();
+                    }
+                });
+            }
+
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') {
+                    const modal = document.getElementById('variantDetailsModal');
+                    if (modal && !modal.classList.contains('hidden')) {
+                        closeVariantDetails();
+                    }
+                }
+            });
+        });
+
         function toggleVariants(productId) {
             const variantsDiv = document.getElementById(`variants-${productId}`);
             const icon = document.getElementById(`icon-${productId}`);
             
             if (variantsDiv.classList.contains('hidden')) {
-                // Open accordion
                 variantsDiv.classList.remove('hidden');
                 icon.classList.add('rotate-180');
             } else {
-                // Close accordion
                 variantsDiv.classList.add('hidden');
                 icon.classList.remove('rotate-180');
             }
         }
     </script>
+
+    <div id="variantDetailsModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/30">
+        <div class="bg-white rounded-2xl shadow-2xl border border-muted/40 max-w-lg w-full overflow-hidden">
+            <div class="flex items-center justify-between p-4 border-b border-muted/30">
+                <h3 class="font-black text-lg">Variant Details</h3>
+                <button id="variantDetailsClose" type="button" class="text-muted hover:text-dark">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            <div class="p-4 space-y-3 text-sm text-dark">
+                <p><span class="font-black">SKU:</span> <span id="variantDetailsSku"></span></p>
+                <p><span class="font-black">Price:</span> ₹<span id="variantDetailsSelling"></span> (MRP: ₹<span id="variantDetailsMrp"></span>, Cost: ₹<span id="variantDetailsCost"></span>)</p>
+                <p><span class="font-black">Stock:</span> <span id="variantDetailsStock"></span></p>
+                <p><span class="font-black">Tax:</span> <span id="variantDetailsTax"></span>%</p>
+                <p><span class="font-black">Weight:</span> <span id="variantDetailsWeight"></span> kg</p>
+                <p><span class="font-black">Dimensions (L×W×H):</span> <span id="variantDetailsDims"></span> cm</p>
+                <p><span class="font-black">Attributes:</span> <span id="variantDetailsAttrs"></span></p>
+                <p><span class="font-black">Image:</span> <a id="variantDetailsImage" href="#" class="text-accent underline" target="_blank">No image</a></p>
+            </div>
+        </div>
+    </div>
 
 </body>
 </html>
