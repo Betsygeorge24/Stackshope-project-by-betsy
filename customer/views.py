@@ -27,119 +27,6 @@ import time
 from django.views.decorators.http import require_http_methods
 
 
-@csrf_exempt
-def payment_success(request):
-
-    data = json.loads(request.body)
-
-    client = razorpay.Client(
-        auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
-    )
-
-    params_dict = {
-        "razorpay_order_id": data["razorpay_order_id"],
-        "razorpay_payment_id": data["razorpay_payment_id"],
-        "razorpay_signature": data["razorpay_signature"],
-    }
-
-    try:
-        client.utility.verify_payment_signature(params_dict)
-
-        payment_order = PaymentOrder.objects.get(
-            razorpay_order_id=data["razorpay_order_id"]
-        )
-
-        payment_order.razorpay_payment_id = data["razorpay_payment_id"]
-        payment_order.razorpay_signature = data["razorpay_signature"]
-        payment_order.status = "SUCCESS"
-        payment_order.save()
-
-        order = payment_order.order
-        order.payment_status = "SUCCESS"
-        order.order_status = "CONFIRMED"
-        order.save()
-
-        cart = Cart.objects.get(user=payment_order.user)
-        cart_items = CartItem.objects.filter(cart=cart)
-
-        for cart_item in cart_items:
-            # Decrease stock quantity
-            cart_item.variant.stock_quantity -= cart_item.quantity
-
-            # Create inventory log
-            InventoryLog.objects.create(
-                variant=cart_item.variant,
-                change_amount=-cart_item.quantity,
-                reason="Order fulfillment",
-                performed_by=payment_order.user,
-            )
-
-            cart_item.variant.save()
-
-            OrderItem.objects.create(
-                order=order,
-                variant=cart_item.variant,
-                seller=cart_item.variant.product.seller,
-                quantity=cart_item.quantity,
-                price_at_purchase=cart_item.price_at_time,
-            )
-
-        cart_items.delete()
-
-        return JsonResponse({"status": "payment verified"})
-
-    except Exception as e:
-        return JsonResponse({"status": "payment failed", "error": str(e)})
-
-
-@login_required
-def order_success(request):
-    """Display order success page after payment completion"""
-    try:
-        payment_order = (
-            PaymentOrder.objects.filter(user=request.user, status="SUCCESS")
-            .order_by("-created_at")
-            .first()
-        )
-
-        if payment_order:
-            cart = Cart.objects.get(user=request.user)
-            cart.items.all().delete()
-
-            context = {
-                "order": payment_order.order,
-                "payment_order": payment_order,
-                "order_amount": payment_order.amount / 100,
-            }
-            return render(request, "customer_templates/order_success.html", context)
-        else:
-            messages.error(request, "No order found.")
-            return redirect("cart_view")
-    except Cart.DoesNotExist:
-        messages.error(request, "Cart not found.")
-        return redirect("cart_view")
-    except Exception as e:
-        messages.error(request, f"An error occurred: {str(e)}")
-        return redirect("cart_view")
-
-
-@customer_required
-def order_success_cod(request, order_id):
-    """Display order success page for COD orders"""
-    order = get_object_or_404(Order, id=order_id, user=request.user)
-
-    cart = Cart.objects.get(user=request.user)
-    cart.items.all().delete()
-
-    context = {
-        "order": order,
-        "order_amount": order.total_amount,
-        "payment_method": order.payment_method,
-        "is_cod": True,
-    }
-    return render(request, "customer_templates/order_success.html", context)
-
-
 # userlogin-----------------------------------------------------------------------------
 
 
@@ -906,7 +793,117 @@ def my_reviews_view(request):
             "page_obj": page_obj,
         },
     )
+@csrf_exempt
+def payment_success(request):
 
+    data = json.loads(request.body)
+
+    client = razorpay.Client(
+        auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
+    )
+
+    params_dict = {
+        "razorpay_order_id": data["razorpay_order_id"],
+        "razorpay_payment_id": data["razorpay_payment_id"],
+        "razorpay_signature": data["razorpay_signature"],
+    }
+
+    try:
+        client.utility.verify_payment_signature(params_dict)
+
+        payment_order = PaymentOrder.objects.get(
+            razorpay_order_id=data["razorpay_order_id"]
+        )
+
+        payment_order.razorpay_payment_id = data["razorpay_payment_id"]
+        payment_order.razorpay_signature = data["razorpay_signature"]
+        payment_order.status = "SUCCESS"
+        payment_order.save()
+
+        order = payment_order.order
+        order.payment_status = "SUCCESS"
+        order.order_status = "CONFIRMED"
+        order.save()
+
+        cart = Cart.objects.get(user=payment_order.user)
+        cart_items = CartItem.objects.filter(cart=cart)
+
+        for cart_item in cart_items:
+            # Decrease stock quantity
+            cart_item.variant.stock_quantity -= cart_item.quantity
+
+            # Create inventory log
+            InventoryLog.objects.create(
+                variant=cart_item.variant,
+                change_amount=-cart_item.quantity,
+                reason="Order fulfillment",
+                performed_by=payment_order.user,
+            )
+
+            cart_item.variant.save()
+
+            OrderItem.objects.create(
+                order=order,
+                variant=cart_item.variant,
+                seller=cart_item.variant.product.seller,
+                quantity=cart_item.quantity,
+                price_at_purchase=cart_item.price_at_time,
+            )
+
+        cart_items.delete()
+
+        return JsonResponse({"status": "payment verified"})
+
+    except Exception as e:
+        return JsonResponse({"status": "payment failed", "error": str(e)})
+
+
+@login_required
+def order_success(request):
+    """Display order success page after payment completion"""
+    try:
+        payment_order = (
+            PaymentOrder.objects.filter(user=request.user, status="SUCCESS")
+            .order_by("-created_at")
+            .first()
+        )
+
+        if payment_order:
+            cart = Cart.objects.get(user=request.user)
+            cart.items.all().delete()
+
+            context = {
+                "order": payment_order.order,
+                "payment_order": payment_order,
+                "order_amount": payment_order.amount / 100,
+            }
+            return render(request, "customer_templates/order_success.html", context)
+        else:
+            messages.error(request, "No order found.")
+            return redirect("cart_view")
+    except Cart.DoesNotExist:
+        messages.error(request, "Cart not found.")
+        return redirect("cart_view")
+    except Exception as e:
+        messages.error(request, f"An error occurred: {str(e)}")
+        return redirect("cart_view")
+
+
+@customer_required
+def order_success_cod(request, order_id):
+    """Display order success page for COD orders"""
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+
+    cart = Cart.objects.get(user=request.user)
+    cart.items.all().delete()
+
+    context = {
+        "order": order,
+        "order_amount": order.total_amount,
+        "payment_method": order.payment_method,
+        "is_cod": True,
+    }
+    return render(request, "customer_templates/order_success.html", context)
 
 # --------------------------------------------------------------------------------
 
