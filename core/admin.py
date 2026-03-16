@@ -1,12 +1,5 @@
 from django.contrib import admin
-from .models import (
-    CustomUser,
-    Address,
-    Notification,
-    Category,
-    SubCategory,
-    Banner,
-)
+from .models import *
 
 admin.site.register(CustomUser)
 admin.site.register(Address)
@@ -14,3 +7,4 @@ admin.site.register(Notification)
 admin.site.register(Category)
 admin.site.register(SubCategory)
 admin.site.register(Banner)
+admin.site.register(EmailOTP)
