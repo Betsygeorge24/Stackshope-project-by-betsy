@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html class="light scroll-smooth" lang="en">
+<html class="scroll-smooth" lang="en">
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
@@ -17,7 +17,7 @@
                         "dark": "#30364F",
                         "muted": "#ACBAC4",
                         "accent": "#E1D9BC",
-                        "light": "#F0F0DB",
+                        "light": "#F8F9FA", /* Updated to the cleaner light gray */
                     },
                     fontFamily: {
                         "display": ["Public Sans", "sans-serif"]
@@ -38,15 +38,15 @@
     </style>
 </head>
 
-<body class="bg-light text-dark font-display flex flex-col min-h-screen overflow-x-hidden">
+<body class="bg-white text-dark font-display flex flex-col min-h-screen overflow-x-hidden">
 
     {% include "customer_templates/Navbar.html" %}
 
-    <main class="max-w-7xl mx-auto w-full px-4 mt-8 mb-20 flex-grow flex flex-col md:flex-row gap-8">
+    <main class="w-full px-4 md:px-8 lg:px-12 mt-8 mb-20 flex-grow flex flex-col md:flex-row gap-8">
         {% include "core_templates/messages.html" %}
 
         <aside class="w-full md:w-64 flex-shrink-0">
-            <div class="bg-white rounded-2xl shadow-sm border border-muted/30 p-6 sticky top-24">
+            <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6 sticky top-24">
                 <h2 class="font-extrabold text-xl text-dark uppercase tracking-wide mb-6">Filters</h2>
 
                 <form method="GET" action="{% url 'search' %}" id="filter-form" class="space-y-8">
@@ -61,7 +61,7 @@
                     {% endif %}
 
                     <div class="mb-8">
-                        <h3 class="font-bold text-sm text-dark uppercase tracking-widest mb-3 border-b border-muted/30 pb-2">
+                        <h3 class="font-bold text-sm text-dark uppercase tracking-widest mb-3 border-b border-muted/20 pb-2">
                             Categories
                         </h3>
                         <ul class="space-y-3">
@@ -98,25 +98,25 @@
                     </div>
 
                     <div>
-                        <h3 class="font-bold text-sm text-dark uppercase tracking-widest mb-3 border-b border-muted/30 pb-2">
+                        <h3 class="font-bold text-sm text-dark uppercase tracking-widest mb-3 border-b border-muted/20 pb-2">
                             Price Range</h3>
 
                         <div class="space-y-3">
                             <div>
                                 <label class="text-xs font-bold text-muted uppercase tracking-widest mb-1 block">Minimum Price</label>
                                 <input type="number" name="min_price" placeholder="Min" value="{{ min_price }}" min="0"
-                                    class="w-full px-3 py-2 text-sm font-semibold border border-muted/50 rounded-lg focus:outline-none focus:border-dark focus:ring-1 focus:ring-dark bg-light/50">
+                                    class="w-full px-3 py-2 text-sm font-semibold border border-muted/30 rounded-lg focus:outline-none focus:border-dark focus:ring-1 focus:ring-dark bg-light/50">
                             </div>
                             <div>
                                 <label class="text-xs font-bold text-muted uppercase tracking-widest mb-1 block">Maximum Price</label>
                                 <input type="number" name="max_price" placeholder="Max" value="{{ max_price }}" min="0"
-                                    class="w-full px-3 py-2 text-sm font-semibold border border-muted/50 rounded-lg focus:outline-none focus:border-dark focus:ring-1 focus:ring-dark bg-light/50">
+                                    class="w-full px-3 py-2 text-sm font-semibold border border-muted/30 rounded-lg focus:outline-none focus:border-dark focus:ring-1 focus:ring-dark bg-light/50">
                             </div>
                         </div>
                         <button type="submit"
-                            class="w-full mt-4 bg-dark text-light py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-dark/90 shadow-md transition-all active:scale-95">Apply Filter</button>
+                            class="w-full mt-4 bg-dark text-white py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-dark/90 shadow-md transition-all active:scale-95">Apply Filter</button>
                         <a href="{% url 'search' %}?category=all"
-                            class="w-full mt-2 block text-center bg-light/50 text-dark py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-light border border-muted/50 transition-all">Clear All Filters</a>
+                            class="w-full mt-2 block text-center bg-light/50 text-dark py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-light border border-muted/30 transition-all">Clear All Filters</a>
                     </div>
                 </form>
             </div>
@@ -124,7 +124,7 @@
 
         <div class="flex-1">
 
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-8 bg-white p-4 rounded-2xl shadow-sm border border-muted/30">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-8 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
                 <p class="text-sm font-bold text-muted mb-4 sm:mb-0">Showing <span class="text-dark">{{ page_obj.object_list|length }}</span> of <span class="text-dark">{{ paginator.count }}</span>
                     Products {% if page_obj.has_other_pages %}<span class="text-muted font-semibold">(Page {{ page_obj.number }} of {{ paginator.num_pages }}){% endif %}</span>
                 </p>
@@ -136,7 +136,7 @@
                     <span class="text-xs font-extrabold text-dark uppercase tracking-widest">Sort By:</span>
                     <select name="sort" id="sort-select"
                         onchange="document.getElementById('sort-input').value = this.value; document.getElementById('filter-form').submit();"
-                        class="text-sm font-bold border border-muted/50 rounded-xl py-2 px-4 bg-light/50 text-dark focus:outline-none focus:border-dark cursor-pointer">
+                        class="text-sm font-bold border border-muted/30 rounded-xl py-2 px-4 bg-light/50 text-dark focus:outline-none focus:border-dark cursor-pointer">
                         <option value="featured" {% if sort_by == "featured" %}selected{% endif %}>Featured</option>
                         <option value="price-low-high" {% if sort_by == "price-low-high" %}selected{% endif %}>Price: Low to High</option>
                         <option value="price-high-low" {% if sort_by == "price-high-low" %}selected{% endif %}>Price: High to Low</option>
@@ -154,37 +154,39 @@
             </div>
             {% endif %}
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 lg:gap-8">
                 {% for x in products %}
 
-                <div class="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-muted/30 hover:border-dark/30 transition-all duration-300 flex flex-col relative">
+                <div class="group bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl border border-gray-100 hover:border-dark/30 transition-all duration-300 flex flex-col relative">
 
-                    <div class="aspect-[4/3] bg-light/30 relative overflow-hidden border-b border-muted/20 flex items-center justify-center p-6 group-hover:bg-light/60 transition-colors">
+                    <div class="aspect-[4/3] bg-light relative overflow-hidden border-b border-muted/20 flex items-center justify-center p-6 group-hover:bg-light/80 transition-colors">
                         {% if x.display_image %}
                         <img alt="{{ x.name }}"
                             class="w-full h-full object-fit-cover mix-blend-multiply transition-transform duration-500 group-hover:scale-110"
                             src="{{ x.display_image }}" />
                         {% else %}
-                        <img alt="Placeholder" class="w-full h-full object-contain mix-blend-multiply opacity-50"
+                        <img alt="Placeholder" class="w-full h-full object-contain mix-blend-multiply opacity-40 p-4"
                             src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&q=80&w=500" />
                         {% endif %}
 
                         {% if x.total_stock <= 0 %}
-                        <div class="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
-                            <span class="bg-dark text-light px-4 py-1.5 rounded-lg text-sm font-black uppercase tracking-widest shadow-lg">Out of Stock</span>
+                        <div class="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center z-10">
+                            <span class="bg-dark text-white px-4 py-1.5 rounded-lg text-sm font-black uppercase tracking-widest shadow-lg">Out of Stock</span>
                         </div>
                         {% endif %}
 
+                        {% if request.user.is_authenticated %}
                         {% with first_variant=x.variants.first %}
                         {% if first_variant %}
-                        <form action="{% url 'addwishlist' first_variant.id %}" method="post" class="absolute top-3 right-3 z-20">
-                            {% csrf_token %}
-                            <button type="submit" class="text-xl transition-all duration-300 hover:scale-125 hover:rotate-8 cursor-pointer group {% if x.is_in_wishlist %}text-red-500 scale-110 drop-shadow-lg{% else %}text-muted/40 hover:text-red-500 hover:drop-shadow-md{% endif %}" title="{% if x.is_in_wishlist %}Remove from wishlist{% else %}Add to wishlist{% endif %}">
-                                <span class="material-icons transition-all duration-200 {% if x.is_in_wishlist %}favorite{% else %}favorite_border{% endif %}"></span>
-                            </button>
-                        </form>
-                        {% endif %}
+                            <form action="{% url 'addwishlist' first_variant.id %}" method="post" class="absolute top-3 right-3 z-20">
+                                {% csrf_token %}
+                                <button type="submit" class="w-9 h-9 rounded-full bg-white shadow-md flex items-center justify-center transition-all duration-300 hover:scale-110 cursor-pointer text-red-500" title="{% if x.is_in_wishlist %}Remove from wishlist{% else %}Add to wishlist{% endif %}">
+                                    <span class="material-icons text-sm">{% if x.is_in_wishlist %}favorite{% else %}favorite_border{% endif %}</span>
+                                </button>
+                            </form>
+                            {% endif %}
                         {% endwith %}
+                        {% endif %}
                     </div>
 
                     <div class="p-5 flex flex-col flex-grow bg-white">
@@ -193,13 +195,14 @@
                                 {{ x.subcategory.category.name|default:"General" }}
                             </span>
                         </div>
+                        
                         <div class="flex items-start justify-between gap-3 mb-2">
                             <h3 class="font-extrabold text-dark text-lg leading-tight line-clamp-2 group-hover:text-accent transition-colors flex-1" title="{{ x.name }}">
                                 <a href="{% url 'productsingle' x.slug %}">{{ x.name }}</a>
                             </h3>
 
                             <a href="{% url 'productsingle' x.slug %}"
-                                class="flex-shrink-0 flex items-center gap-1 text-[10px] uppercase tracking-widest font-bold bg-light/50 text-dark px-2.5 py-1.5 rounded-lg border border-muted/30 hover:bg-dark hover:text-light hover:border-dark transition-all mt-0.5 shadow-sm">
+                                class="flex-shrink-0 flex items-center gap-1 text-[10px] uppercase tracking-widest font-bold bg-light text-dark px-2.5 py-1.5 rounded-lg border border-muted/30 hover:bg-dark hover:text-white hover:border-dark transition-all mt-0.5 shadow-sm">
                                 <span>View</span>
                                 <span class="material-icons text-[14px]">arrow_forward</span>
                             </a>
@@ -223,7 +226,7 @@
                 </div>
 
                 {% empty %}
-                <div class="col-span-full text-center py-24 bg-white rounded-3xl border-2 border-dashed border-muted/50 shadow-sm">
+                <div class="col-span-full text-center py-24 bg-white rounded-3xl border-2 border-dashed border-muted/30 shadow-sm">
                     <h3 class="text-xl font-black text-dark">No products found</h3>
                     <p class="text-muted text-sm mt-2">Try another category or check back later.</p>
                 </div>
@@ -237,33 +240,33 @@
                 <nav class="flex items-center gap-2">
                     {% if page_obj.has_previous %}
                     <a href="?page=1{% if search_query %}&q={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% for cat in selected_categories %}&category={{ cat }}{% endfor %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}"
-                        class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/50 text-muted hover:text-dark hover:border-dark hover:bg-white transition-all shadow-sm"
+                        class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/30 text-muted hover:text-dark hover:border-dark hover:bg-white transition-all shadow-sm bg-white"
                         title="First Page">
                         <span class="material-icons text-sm">first_page</span>
                     </a>
                     <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% for cat in selected_categories %}&category={{ cat }}{% endfor %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}"
-                        class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/50 text-muted hover:text-dark hover:border-dark hover:bg-white transition-all shadow-sm"
+                        class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/30 text-muted hover:text-dark hover:border-dark hover:bg-white transition-all shadow-sm bg-white"
                         title="Previous Page">
                         <span class="material-icons text-sm">chevron_left</span>
                     </a>
                     {% else %}
                     <button disabled
-                        class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/50 text-muted/30 cursor-not-allowed opacity-50">
+                        class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/30 text-muted/30 cursor-not-allowed opacity-50 bg-white">
                         <span class="material-icons text-sm">first_page</span>
                     </button>
                     <button disabled
-                        class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/50 text-muted/30 cursor-not-allowed opacity-50">
+                        class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/30 text-muted/30 cursor-not-allowed opacity-50 bg-white">
                         <span class="material-icons text-sm">chevron_left</span>
                     </button>
                     {% endif %}
 
                     {% for i in paginator.page_range %}
                         {% if page_obj.number == i %}
-                            <button disabled class="w-10 h-10 flex items-center justify-center rounded-xl border border-transparent bg-dark text-light font-bold shadow-md cursor-default">{{ i }}</button>
+                            <button disabled class="w-10 h-10 flex items-center justify-center rounded-xl border border-transparent bg-dark text-white font-bold shadow-md cursor-default">{{ i }}</button>
                         {% elif i >= page_obj.number|add:'-2' and i <= page_obj.number|add:'2' %}
-                            <a href="?page={{ i }}{% if search_query %}&q={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% for cat in selected_categories %}&category={{ cat }}{% endfor %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}" class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/50 text-dark font-bold hover:bg-accent hover:border-dark hover:shadow-sm transition-all bg-white">{{ i }}</a>
+                            <a href="?page={{ i }}{% if search_query %}&q={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% for cat in selected_categories %}&category={{ cat }}{% endfor %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}" class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/30 text-dark font-bold hover:bg-accent hover:border-transparent hover:shadow-sm transition-all bg-white shadow-sm">{{ i }}</a>
                         {% elif i == 1 or i == paginator.num_pages %}
-                            <a href="?page={{ i }}{% if search_query %}&q={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% for cat in selected_categories %}&category={{ cat }}{% endfor %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}" class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/50 text-dark font-bold hover:bg-accent hover:border-dark hover:shadow-sm transition-all bg-white">{{ i }}</a>
+                            <a href="?page={{ i }}{% if search_query %}&q={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% for cat in selected_categories %}&category={{ cat }}{% endfor %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}" class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/30 text-dark font-bold hover:bg-accent hover:border-transparent hover:shadow-sm transition-all bg-white shadow-sm">{{ i }}</a>
                         {% elif i == page_obj.number|add:'-3' or i == page_obj.number|add:'3' %}
                             <span class="px-2 text-muted font-bold tracking-widest">...</span>
                         {% endif %}
@@ -271,22 +274,22 @@
 
                     {% if page_obj.has_next %}
                     <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% for cat in selected_categories %}&category={{ cat }}{% endfor %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}"
-                        class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/50 text-muted hover:text-dark hover:border-dark hover:bg-white transition-all shadow-sm"
+                        class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/30 text-muted hover:text-dark hover:border-dark hover:bg-white transition-all shadow-sm bg-white"
                         title="Next Page">
                         <span class="material-icons text-sm">chevron_right</span>
                     </a>
                     <a href="?page={{ paginator.num_pages }}{% if search_query %}&q={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% for cat in selected_categories %}&category={{ cat }}{% endfor %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}"
-                        class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/50 text-muted hover:text-dark hover:border-dark hover:bg-white transition-all shadow-sm"
+                        class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/30 text-muted hover:text-dark hover:border-dark hover:bg-white transition-all shadow-sm bg-white"
                         title="Last Page">
                         <span class="material-icons text-sm">last_page</span>
                     </a>
                     {% else %}
                     <button disabled
-                        class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/50 text-muted/30 cursor-not-allowed opacity-50">
+                        class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/30 text-muted/30 cursor-not-allowed opacity-50 bg-white">
                         <span class="material-icons text-sm">chevron_right</span>
                     </button>
                     <button disabled
-                        class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/50 text-muted/30 cursor-not-allowed opacity-50">
+                        class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/30 text-muted/30 cursor-not-allowed opacity-50 bg-white">
                         <span class="material-icons text-sm">last_page</span>
                     </button>
                     {% endif %}

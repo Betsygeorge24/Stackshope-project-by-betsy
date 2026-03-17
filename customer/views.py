@@ -24,6 +24,7 @@ import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
 import time
+import re
 from django.views.decorators.http import require_http_methods
 
 
@@ -453,6 +454,10 @@ def add_address_view(request):
         if not has_addresses:
             is_default_checked = True
 
+        if not re.fullmatch(r"\d{6}", (pincode or "")):
+            messages.error(request, "PIN code must be exactly 6 digits.")
+            return redirect("address")
+
         if is_default_checked:
             Address.objects.filter(user=request.user, is_default=True).update(
                 is_default=False
@@ -512,6 +517,11 @@ def update_address_view(request):
         address.city = request.POST.get("city")
         address.state = request.POST.get("state")
         address.pincode = request.POST.get("pincode")
+
+        if not re.fullmatch(r"\d{6}", (address.pincode or "")):
+            messages.error(request, "PIN code must be exactly 6 digits.")
+            return redirect("address")
+
         address.country = request.POST.get("country")
         address.house_info = request.POST.get("house_info")
         address.landmark = request.POST.get("landmark", "")
@@ -570,18 +580,12 @@ def product_list_view(request):
     except EmptyPage:
         products_page = paginator.page(paginator.num_pages)
 
-    # if request.user.is_authenticated:
-    #     try:
-    #         default_wishlist = Wishlist.objects.get(user=request.user, is_default=True)
-    #         wishlist_variant_ids = set(
-    #             WishlistItem.objects.filter(wishlist=default_wishlist).values_list(
-    #                 "variant__product_id", flat=True
-    #             )
-    #         )
-    #     except Wishlist.DoesNotExist:
-    #         wishlist_variant_ids = set()
-    # else:
-    #     wishlist_variant_ids = set()
+    wishlist_product_ids = set()
+    if request.user.is_authenticated:
+        wishlist_product_ids = set(
+            WishlistItem.objects.filter(wishlist__user=request.user)
+            .values_list("variant__product_id", flat=True)
+        )
 
     cart_items = []
     if request.user.is_authenticated:
@@ -589,8 +593,8 @@ def product_list_view(request):
         if cart:
             cart_items = CartItem.objects.filter(cart=cart)
 
-    # for product in products_page:
-    #     product.is_in_wishlist = product.id in wishlist_variant_ids
+    for product in products_page:
+        product.is_in_wishlist = product.id in wishlist_product_ids
 
     return render(
         request,

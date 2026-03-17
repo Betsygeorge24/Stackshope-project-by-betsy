@@ -7,7 +7,7 @@ from datetime import timedelta
 from django.core.mail import send_mail
 from django.conf import settings
 from core.decorators import admin_required, seller_required
-from customer.models import Cart, CartItem
+from customer.models import Cart, CartItem, WishlistItem
 from .models import CustomUser, EmailOTP, Category
 from seller.models import *
 from django.db.models import Q, Count
@@ -34,11 +34,22 @@ def home_view(request):
         return redirect(request.META.get("HTTP_REFERER", "admin_dashboard"))
     # if user.is_authenticated and user.role=="SELLER":
     #     return redirect(request.META.get('HTTP_REFERER', 'dashboard'))
+    wishlist_product_ids = set()
+    if user.is_authenticated:
+        wishlist_product_ids = set(
+            WishlistItem.objects.filter(wishlist__user=user)
+            .values_list("variant__product_id", flat=True)
+        )
+
     if user.is_authenticated:
         cart = Cart.objects.filter(user=user).first()
         cart_items = CartItem.objects.filter(cart=cart).prefetch_related(
             "variant__product__subcategory", "variant__images"
         )
+
+        for product in top_picks:
+            product.is_in_wishlist = product.id in wishlist_product_ids
+
         return render(
             request,
             "core_templates/homepage.html",
@@ -177,12 +188,18 @@ def search_and_filter_view(request):
     cart_variant_ids = []
     cart_items = []
 
+    product_wishlist_product_ids = set()
     if user.is_authenticated:
         from customer.models import WishlistItem, Cart, CartItem
 
         wishlist_variant_ids = list(
             WishlistItem.objects.filter(wishlist__user=user).values_list(
                 "variant_id", flat=True
+            )
+        )
+        product_wishlist_product_ids = set(
+            WishlistItem.objects.filter(wishlist__user=user).values_list(
+                "variant__product_id", flat=True
             )
         )
         cart = Cart.objects.filter(user=user).first()
@@ -193,6 +210,10 @@ def search_and_filter_view(request):
             cart_variant_ids = list(
                 CartItem.objects.filter(cart=cart).values_list("variant_id", flat=True)
             )
+
+    # mark wishlist state per product on search/filter results
+    for product in product_var:
+        product.is_in_wishlist = product.id in product_wishlist_product_ids
 
     context = {
         "products": product_var,

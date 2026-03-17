@@ -367,8 +367,8 @@
                 const stateEl = document.getElementById(stateInputId);
 
                 // Fetch data only when exact 6 digits are entered
-                if (pincode.length === 6) {
-                    fetch(`https://api.postalpincode.in/pincode/₹{pincode}`)
+                if (/^\d{6}$/.test(pincode)) {
+                    fetch(`https://api.postalpincode.in/pincode/${pincode}`)
                         .then(response => response.json())
                         .then(data => {
                             if (data[0].Status === 'Success') {
