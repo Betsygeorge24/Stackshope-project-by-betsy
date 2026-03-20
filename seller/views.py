@@ -2,23 +2,13 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from core.decorators import seller_required, verified_seller_required
-from .models import (
-    SellerProfile,
-    Product,
-    SubCategory,
-    Attribute,
-    VariantAttributeBridge,
-    ProductVariant,
-    ProductImage,
-)
+from .models import *
 from core.models import *
 from core.models import Category
 from django.db.models import Count, Avg, Max, Sum, Q
 from customer.models import Order, OrderItem, Review
 from django.contrib import messages
 import random
-
-
 @login_required
 @seller_required
 def seller_profile_view(request):
@@ -102,24 +92,179 @@ def dashboard_view(request):
     return render(request, "seller_templates/sellerdashboard.html", context)
 
 
+@verified_seller_required
+def add_product(request):
+    seller = request.user.seller_profile
+    categories = Category.objects.all()
+    subcategories = SubCategory.objects.all()
+
+    if request.method == "POST":
+
+        product = Product.objects.create(
+            seller=seller,
+            subcategory_id=request.POST.get("subcategory"),
+            name=request.POST.get("name"),
+            description=request.POST.get("description"),
+            brand=request.POST.get("brand"),
+            model_number=request.POST.get("model_number"),
+        )
+
+        variant = ProductVariant.objects.create(
+            product=product,
+            mrp=request.POST.get("mrp") or 0,
+            selling_price=request.POST.get("selling_price") or 0,
+            cost_price=request.POST.get("cost_price") or 0,
+            stock_quantity=request.POST.get("stock_quantity") or 0,
+            weight=request.POST.get("weight") or 0,
+            length=request.POST.get("length") or 0,
+            width=request.POST.get("width") or 0,
+            height=request.POST.get("height") or 0,
+            tax_percentage=request.POST.get("tax_percentage") or 0,
+        )
+        primary_image = request.FILES.get("primary_image")
+        if primary_image:
+            ProductImage.objects.create(
+                variant=variant, image_url=primary_image, is_primary=True
+            )
+
+        additional_images = request.FILES.getlist("additional_images")
+        for image in additional_images:
+            ProductImage.objects.create(
+                variant=variant, image_url=image, is_primary=False
+            )
+
+        return redirect("dashboard")
+    context = {
+        "categories": categories,
+        "subcategories": subcategories,
+        
+    }
+    return render(request, "seller_templates/add_product.html", context)
+@verified_seller_required
+def update_product(request, product_slug):
+    seller = request.user.seller_profile
+    product = get_object_or_404(Product, slug=product_slug, seller=seller)
+    variant = product.variants.first()
+    primary_image = variant.images.filter(is_primary=True).first()
+    additional_images = variant.images.filter(is_primary=False)
+
+    categories = Category.objects.all()
+    subcategories = SubCategory.objects.all()
+    attributes = Attribute.objects.prefetch_related("options").all()
+
+    if request.method == "POST":
+
+        
+        product.name = request.POST.get("name")
+        product.description = request.POST.get("description")
+        product.brand = request.POST.get("brand")
+        product.model_number = request.POST.get("model_number")
+        product.subcategory_id = request.POST.get("subcategory")
+        product.save()
+
+        
+        variant.mrp = request.POST.get("mrp") or 0
+        variant.selling_price = request.POST.get("selling_price") or 0
+        variant.cost_price = request.POST.get("cost_price") or 0
+        variant.stock_quantity = request.POST.get("stock_quantity") or 0
+        variant.weight = request.POST.get("weight") or 0
+        variant.length = request.POST.get("length") or 0
+        variant.width = request.POST.get("width") or 0
+        variant.height = request.POST.get("height") or 0
+        variant.tax_percentage = request.POST.get("tax_percentage") or 0
+        variant.save()
+
+        
+        VariantAttributeBridge.objects.filter(variant=variant).delete()
+        for attribute in attributes:
+            option_id = request.POST.get(f"attribute_{attribute.id}")
+            if option_id:
+                VariantAttributeBridge.objects.create(
+                    variant=variant,
+                    option_id=option_id
+                )
+
+        
+        uploaded_primary_image = request.FILES.get("primary_image")
+        if uploaded_primary_image:
+            ProductImage.objects.filter(variant=variant, is_primary=True).delete()
+            ProductImage.objects.create(
+                variant=variant,
+                image_url=uploaded_primary_image,
+                is_primary=True
+            )
+
+        uploaded_additional_images = request.FILES.getlist("additional_images")
+        for image in uploaded_additional_images:
+            ProductImage.objects.create(
+                variant=variant,
+                image_url=image,
+                is_primary=False
+            )
+
+        return redirect("dashboard")
+
+    
+    context = {
+        "product": product,
+        "variant": variant,
+        "categories": categories,
+        "subcategories": subcategories,
+        "attributes": attributes,
+        "primary_image": primary_image,
+        "additional_images": additional_images,
+    }
+
+    return render(request, "seller_templates/update_product.html", context)
+
+@verified_seller_required
+def delete_product(request, product_slug):
+    seller = request.user.seller_profile
+    product = get_object_or_404(Product, slug=product_slug, seller=seller)
+
+    if request.method == "POST":
+        product.delete()
+        return redirect("dashboard")
+
+    return redirect("dashboard")
+
+######################################################################################################################
+#####################################################################################################################
+def seller_broche_view(request):
+    if request.user.is_authenticated:
+        if (
+            SellerProfile.objects.filter(user=request.user).exists()
+            and request.user.is_seller
+            and request.user.is_verified_seller
+        ):
+            return redirect("dashboard")
+        elif (
+            SellerProfile.objects.filter(user=request.user).exists()
+            and request.user.is_seller
+        ):
+            return redirect("seller-profile")
+        else:
+            return redirect("seller-bridge")
+    return render(request, "seller_templates/seller_broche.html")
+
 def seller_bridge(request):
     role = request.GET.get("role")
     if (
         request.user.is_authenticated
         and SellerProfile.objects.filter(user=request.user).exists()
+        and request.user.is_verified_seller
+
     ):
-        return redirect("seller-profile")
+        return redirect("dashboard")
     if request.method == "POST":
-        if request.user.is_authenticated and request.method == "POST":
+        if request.user.is_authenticated:
             seller_profile, created = SellerProfile.objects.get_or_create(
                 user=request.user
             )
             seller_profile.store_name = request.POST.get("store_name")
             seller_profile.gst_number = request.POST.get("tax_id", "")
             seller_profile.pan_number = request.POST.get("pan_number", "")
-            seller_profile.bank_account_number = request.POST.get(
-                "bank_account_number", ""
-            )
+            seller_profile.bank_account_number = request.POST.get("bank_account_number", "" )
             seller_profile.ifsc_code = request.POST.get("ifsc_code", "")
             seller_profile.business_address = request.POST.get("description", "")
 
@@ -147,7 +292,7 @@ def seller_bridge(request):
             email = request.POST.get("email")
             phone_number = request.POST.get("phone_number")
             password = request.POST.get("password")
-            cnf_password = request.POST.get("password")
+            cnf_password = request.POST.get("confirm_password")
             if password != cnf_password:
                 return render(
                     request,
@@ -158,14 +303,14 @@ def seller_bridge(request):
                 messages.error(request, "Username already exists!")
                 return render(
                     request,
-                    "seller_templates/seller_bridge",
+                    "seller_templates/seller_bridge.html",
                     {"username": username, "email": email},
                 )
             if CustomUser.objects.filter(email=email).exists():
                 messages.error(request, "Email already exists!")
                 return render(
                     request,
-                    "seller_templates/seller_bridge",
+                    "seller_templates/seller_bridge.html",
                     {"username": username, "email": email},
                 )
             user = CustomUser.objects.create_user(
@@ -187,108 +332,15 @@ def seller_bridge(request):
                 ifsc_code=request.POST.get("ifsc_code"),
                 store_image=request.FILES.get("logo"),
             )
-        redirect("login")
+        return redirect("login")
     return render(request, "seller_templates/seller_bridge.html")
 
-
-def seller_broche_view(request):
-    if request.user.is_authenticated:
-        if (
-            SellerProfile.objects.filter(user=request.user).exists()
-            and request.user.is_seller
-            and request.user.is_verified_seller
-        ):
-            return redirect("dashboard")
-        elif (
-            SellerProfile.objects.filter(user=request.user).exists()
-            and request.user.is_seller
-        ):
-            return redirect("seller-profile")
-        else:
-            return redirect("seller-bridge")
-    return render(request, "seller_templates/seller_broche.html")
-
-
-@verified_seller_required
-def add_product(request):
-    seller = request.user.seller_profile
-    categories = Category.objects.all()
-    subcategories = SubCategory.objects.all()
-    attributes = Attribute.objects.prefetch_related("options").all()
-
-    if request.method == "POST":
-
-        product = Product.objects.create(
-            seller=seller,
-            subcategory_id=request.POST.get("subcategory"),
-            name=request.POST.get("name"),
-            description=request.POST.get("description"),
-            brand=request.POST.get("brand"),
-            model_number=request.POST.get("model_number"),
-        )
-
-        variant = ProductVariant.objects.create(
-            product=product,
-            mrp=request.POST.get("mrp") or 0,
-            selling_price=request.POST.get("selling_price") or 0,
-            cost_price=request.POST.get("cost_price") or 0,
-            stock_quantity=request.POST.get("stock_quantity") or 0,
-            weight=request.POST.get("weight") or 0,
-            length=request.POST.get("length") or 0,
-            width=request.POST.get("width") or 0,
-            height=request.POST.get("height") or 0,
-            tax_percentage=request.POST.get("tax_percentage") or 0,
-        )
-
-        for attribute in attributes:
-            option_id = request.POST.get(f"attribute_{attribute.id}")
-            if option_id:
-                VariantAttributeBridge.objects.create(
-                    variant=variant, option_id=option_id
-                )
-        primary_image = request.FILES.get("primary_image")
-        if primary_image:
-            ProductImage.objects.create(
-                variant=variant, image_url=primary_image, is_primary=True
-            )
-
-        additional_images = request.FILES.getlist("additional_images")
-        for image in additional_images:
-            ProductImage.objects.create(
-                variant=variant, image_url=image, is_primary=False
-            )
-
-        return redirect("dashboard")
-    context = {
-        "categories": categories,
-        "subcategories": subcategories,
-        "attributes": attributes,
-    }
-    return render(request, "seller_templates/add_product.html", context)
-
-
-@verified_seller_required
-def update_product(request, product_slug):
-    seller = request.user.seller_profile
-    product = get_object_or_404(Product, slug=product_slug, seller=seller)
-
-    if request.method == "POST":
-        product.name = request.POST.get("name")
-        product.description = request.POST.get("description")
-        product.brand = request.POST.get("brand")
-        product.save()
-        return redirect("dashboard")
-
-    return render(request, "seller_templates/update_product.html", {"product": product})
-
-
+ 
 @verified_seller_required
 def manage_variants(request, product_slug):
     seller = request.user.seller_profile
     product = get_object_or_404(Product, slug=product_slug, seller=seller)
-    attributes = Attribute.objects.filter(
-        subcategory=product.subcategory
-    ).prefetch_related("options")
+  
     variants = product.variants.prefetch_related(
         "images", "attributes__option__attribute"
     )
@@ -313,14 +365,10 @@ def manage_variants(request, product_slug):
             variant.tax_percentage = request.POST.get("tax_percentage") or 0
             variant.save()
 
+            
             VariantAttributeBridge.objects.filter(variant=variant).delete()
-            for attribute in attributes:
-                option_id = request.POST.get(f"attribute_{attribute.id}")
-                if option_id:
-                    VariantAttributeBridge.objects.create(
-                        variant=variant, option_id=option_id
-                    )
 
+          
             primary_image = request.FILES.get("primary_image")
             if primary_image:
                 ProductImage.objects.filter(variant=variant, is_primary=True).delete()
@@ -337,7 +385,6 @@ def manage_variants(request, product_slug):
             messages.success(request, "Variant updated successfully.")
             return redirect("manage_variants", product_slug=product.slug)
 
-        # new variant create
         variant = ProductVariant.objects.create(
             product=product,
             mrp=request.POST.get("mrp") or 0,
@@ -351,13 +398,7 @@ def manage_variants(request, product_slug):
             tax_percentage=request.POST.get("tax_percentage") or 0,
         )
 
-        for attribute in attributes:
-            option_id = request.POST.get(f"attribute_{attribute.id}")
-            if option_id:
-                VariantAttributeBridge.objects.create(
-                    variant=variant, option_id=option_id
-                )
-
+       
         primary_image = request.FILES.get("primary_image")
         if primary_image:
             ProductImage.objects.create(
@@ -373,7 +414,6 @@ def manage_variants(request, product_slug):
         messages.success(request, "Variant added successfully.")
         return redirect("manage_variants", product_slug=product.slug)
 
-    # GET section: check whether user requested editing
     edit_variant_id = request.GET.get("edit_variant_id")
     if edit_variant_id:
         edit_variant = get_object_or_404(
@@ -390,7 +430,6 @@ def manage_variants(request, product_slug):
         "seller_templates/manage_variants.html",
         {
             "product": product,
-            "attributes": attributes,
             "variants": variants,
             "edit_variant": edit_variant,
             "selected_option_ids": selected_option_ids,
@@ -398,16 +437,6 @@ def manage_variants(request, product_slug):
     )
 
 
-@verified_seller_required
-def delete_product(request, product_slug):
-    seller = request.user.seller_profile
-    product = get_object_or_404(Product, slug=product_slug, seller=seller)
-
-    if request.method == "POST":
-        product.delete()
-        return redirect("dashboard")
-
-    return redirect("dashboard")
 
 
 @verified_seller_required
@@ -529,6 +558,25 @@ def update_order_status(request):
 
     return redirect("seller_customers_orders")
 
-
 def seller_analytics(request):
-    return render(request, "seller_templates/selleranalytics.html")
+   seller = request.user.seller_profile
+
+   logs = InventoryLog.objects.filter(
+        variant__product__seller=seller
+    ).select_related(
+        "variant", "variant__product", "performed_by"
+    )[:15]
+
+   return render(request, 'seller_templates/selleranalytics.html', {
+        "logs": logs
+    })
+@verified_seller_required
+def delete_product_image(request, image_id):
+    image = get_object_or_404(ProductImage, id=image_id)
+    if image.variant.product.seller != request.user.seller_profile:
+        return redirect("dashboard")
+
+    if request.method == "POST":
+        image.delete()
+
+    return redirect(request.META.get("HTTP_REFERER"))

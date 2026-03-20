@@ -122,31 +122,7 @@
                             </div>
                         </div>
 
-                        <div class="space-y-4">
-                            <h3 class="text-xs font-black text-muted uppercase tracking-widest border-b border-muted/20 pb-2 flex items-center gap-2">
-                                <span class="material-icons text-[16px] text-dark">tune</span> Attribute Options
-                            </h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {% for attribute in attributes %}
-                                <div>
-                                    <label class="block text-[10px] font-black uppercase tracking-widest text-muted mb-2">{{ attribute.name }}</label>
-                                    <div class="relative">
-                                        <select name="attribute_{{ attribute.id }}" class="w-full px-4 py-3 bg-light/30 border border-muted/50 rounded-xl text-sm font-bold text-dark focus:outline-none focus:ring-2 focus:ring-dark focus:border-transparent appearance-none transition-all cursor-pointer">
-                                            <option value="" disabled selected>-- Choose {{ attribute.name }} --</option>
-                                            {% for option in attribute.options.all %}
-                                                <option value="{{ option.id }}" {% if option.id in selected_option_ids %}selected{% endif %}>{{ option.value }}</option>
-                                            {% endfor %}
-                                        </select>
-                                        <span class="material-icons absolute right-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none">expand_more</span>
-                                    </div>
-                                </div>
-                                {% empty %}
-                                <div class="col-span-2 p-4 bg-yellow-50 border border-yellow-200 rounded-xl text-yellow-700 text-sm font-bold flex items-center gap-2">
-                                    <span class="material-icons text-[18px]">info</span> No attributes defined for this product's category.
-                                </div>
-                                {% endfor %}
-                            </div>
-                        </div>
+                   
 
                         <div class="space-y-4">
                             <h3 class="text-xs font-black text-muted uppercase tracking-widest border-b border-muted/20 pb-2 flex items-center gap-2">

@@ -212,83 +212,91 @@
             </div>
 
         </div>
+<div class="bg-white rounded-3xl shadow-sm border border-muted/30 overflow-hidden mt-8">
 
-        <div class="bg-white rounded-3xl shadow-sm border border-muted/30 overflow-hidden">
-            <div class="px-6 sm:px-8 py-6 border-b border-muted/20 flex items-center justify-between bg-light/30">
-                <div>
-                    <h3 class="text-xl font-black text-dark flex items-center gap-2">
-                        <span class="material-icons text-accent">workspace_premium</span> Top Performers
-                    </h3>
-                </div>
-                <button class="bg-white border border-muted/50 text-dark px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest hover:border-dark transition-colors shadow-sm">View All</button>
-            </div>
-            
-            <div class="overflow-x-auto hide-scrollbar">
-                <table class="w-full text-left border-collapse min-w-[600px]">
-                    <thead>
-                        <tr class="border-b border-muted/20">
-                            <th class="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-muted">Product Name</th>
-                            <th class="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-muted">Units Sold</th>
-                            <th class="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-muted">Total Revenue</th>
-                            <th class="px-8 py-4 text-[10px] font-black uppercase tracking-widest text-muted text-right">Trend</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-muted/10">
-                        <tr class="hover:bg-light/30 transition-colors group cursor-pointer">
-                            <td class="px-8 py-5">
-                                <div class="flex items-center gap-4">
-                                    <div class="w-12 h-12 rounded-xl overflow-hidden bg-light border border-muted/20 p-1 flex-shrink-0">
-                                        <img alt="Headphones" class="w-full h-full object-cover mix-blend-multiply" src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&q=80&w=100"/>
-                                    </div>
-                                    <div class="font-extrabold text-sm text-dark group-hover:text-accent transition-colors">Aura Pro Wireless</div>
-                                </div>
-                            </td>
-                            <td class="px-8 py-5 text-sm font-bold text-dark/70">1,240 units</td>
-                            <td class="px-8 py-5 text-sm font-black text-dark">₹18,450.00</td>
-                            <td class="px-8 py-5 text-right">
-                                <div class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-50 border border-emerald-100">
-                                    <span class="text-emerald-600 material-icons text-[18px]">trending_up</span>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr class="hover:bg-light/30 transition-colors group cursor-pointer">
-                            <td class="px-8 py-5">
-                                <div class="flex items-center gap-4">
-                                    <div class="w-12 h-12 rounded-xl overflow-hidden bg-light border border-muted/20 p-1 flex-shrink-0">
-                                        <img alt="Watch" class="w-full h-full object-cover mix-blend-multiply" src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=100"/>
-                                    </div>
-                                    <div class="font-extrabold text-sm text-dark group-hover:text-accent transition-colors">Horizon Minimalist Watch</div>
-                                </div>
-                            </td>
-                            <td class="px-8 py-5 text-sm font-bold text-dark/70">842 units</td>
-                            <td class="px-8 py-5 text-sm font-black text-dark">₹12,240.00</td>
-                            <td class="px-8 py-5 text-right">
-                                <div class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-50 border border-emerald-100">
-                                    <span class="text-emerald-600 material-icons text-[18px]">trending_up</span>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr class="hover:bg-light/30 transition-colors group cursor-pointer">
-                            <td class="px-8 py-5">
-                                <div class="flex items-center gap-4">
-                                    <div class="w-12 h-12 rounded-xl overflow-hidden bg-light border border-muted/20 p-1 flex-shrink-0">
-                                        <img alt="Sneakers" class="w-full h-full object-cover mix-blend-multiply" src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=100"/>
-                                    </div>
-                                    <div class="font-extrabold text-sm text-dark group-hover:text-accent transition-colors">Swift Run Sneakers</div>
-                                </div>
-                            </td>
-                            <td class="px-8 py-5 text-sm font-bold text-dark/70">124 units</td>
-                            <td class="px-8 py-5 text-sm font-black text-dark">₹9,500.00</td>
-                            <td class="px-8 py-5 text-right">
-                                <div class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-rose-50 border border-rose-100">
-                                    <span class="text-rose-500 material-icons text-[18px]">trending_down</span>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+    <div class="px-6 sm:px-8 py-6 border-b border-muted/20 flex items-center justify-between bg-light/30">
+        <h3 class="text-xl font-black text-dark flex items-center gap-2">
+            <span class="material-icons text-accent">inventory</span> Inventory Activity
+        </h3>
+    </div>
+
+    <div class="overflow-x-auto hide-scrollbar">
+        <table class="w-full text-left border-collapse min-w-[700px]">
+            <thead>
+                <tr class="border-b border-muted/20">
+                    <th class="px-8 py-4 text-xs font-black text-muted">Product</th>
+                    <th class="px-8 py-4 text-xs font-black text-muted">SKU</th>
+                    <th class="px-8 py-4 text-xs font-black text-muted">Change</th>
+                    <th class="px-8 py-4 text-xs font-black text-muted">Reason</th>
+                    <th class="px-8 py-4 text-xs font-black text-muted">By</th>
+                    <th class="px-8 py-4 text-xs font-black text-muted">Date</th>
+                </tr>
+            </thead>
+
+            <tbody class="divide-y divide-muted/10">
+                {% for log in logs %}
+                <tr class="hover:bg-light/30 transition">
+                    
+                    <!-- Product -->
+                    <td class="px-8 py-5 font-bold text-dark">
+                        {{ log.variant.product.name }}
+                    </td>
+
+                    <!-- SKU -->
+                    <td class="px-8 py-5 text-sm text-muted">
+                        {{ log.variant.sku_code }}
+                    </td>
+
+                    <!-- Change -->
+                    <td class="px-8 py-5 font-black
+                        {% if log.change_amount > 0 %}
+                            text-emerald-600
+                        {% else %}
+                            text-rose-500
+                        {% endif %}
+                    ">
+                        {{ log.change_amount }}
+                    </td>
+
+                    <!-- Reason -->
+                    <td class="px-8 py-5">
+                        <span class="px-3 py-1 text-xs font-black rounded-lg
+                            {% if log.reason == 'ADD' %}
+                                bg-emerald-50 text-emerald-600
+                            {% elif log.reason == 'SALE' %}
+                                bg-rose-50 text-rose-500
+                            {% elif log.reason == 'RETURN' %}
+                                bg-blue-50 text-blue-600
+                            {% else %}
+                                bg-amber-50 text-amber-600
+                            {% endif %}
+                        ">
+                            {{ log.reason }}
+                        </span>
+                    </td>
+
+                    <!-- User -->
+                    <td class="px-8 py-5 text-sm text-muted">
+                        {{ log.performed_by|default:"System" }}
+                    </td>
+
+                    <!-- Date -->
+                    <td class="px-8 py-5 text-sm text-muted">
+                        {{ log.created_at|date:"M d, H:i" }}
+                    </td>
+
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-10 text-muted font-bold">
+                        No inventory activity yet
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 
     </main>
 
