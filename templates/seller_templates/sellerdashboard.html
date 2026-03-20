@@ -187,7 +187,6 @@
                                      data-variant-tax="{{ variant.tax_percentage }}"
                                      data-variant-weight="{{ variant.weight }}"
                                      data-variant-dims="{{ variant.length }} x {{ variant.width }} x {{ variant.height }}"
-                                     data-variant-attributes="{% for va in variant.attributes.all %}{{ va.option.attribute.name }}:{{ va.option.value }}{% if not forloop.last %}, {% endif %}{% endfor %}"
                                      data-variant-image="{% if variant.images.first %}{{ variant.images.first.image_url.url }}{% endif %}">
                                     
                                     <div class="w-12 h-12 rounded-lg bg-light border border-muted/20 overflow-hidden p-0.5 flex-shrink-0">
@@ -300,7 +299,6 @@
                 document.getElementById('variantDetailsTax').textContent = variantCard.dataset.variantTax || '0';
                 document.getElementById('variantDetailsWeight').textContent = variantCard.dataset.variantWeight || '0.00';
                 document.getElementById('variantDetailsDims').textContent = variantCard.dataset.variantDims || 'N/A';
-                document.getElementById('variantDetailsAttrs').textContent = variantCard.dataset.variantAttributes || 'None';
 
                 const imgUrl = variantCard.dataset.variantImage || '';
                 const imgLink = document.getElementById('variantDetailsImage');
@@ -384,7 +382,6 @@
                 <p><span class="font-black">Tax:</span> <span id="variantDetailsTax"></span>%</p>
                 <p><span class="font-black">Weight:</span> <span id="variantDetailsWeight"></span> kg</p>
                 <p><span class="font-black">Dimensions (L×W×H):</span> <span id="variantDetailsDims"></span> cm</p>
-                <p><span class="font-black">Attributes:</span> <span id="variantDetailsAttrs"></span></p>
                 <p><span class="font-black">Image:</span> <a id="variantDetailsImage" href="#" class="text-accent underline" target="_blank">No image</a></p>
             </div>
         </div>

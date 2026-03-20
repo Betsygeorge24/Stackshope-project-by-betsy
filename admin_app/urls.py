@@ -6,11 +6,14 @@ urlpatterns = [
     path('sellerverification/<int:id>/',views.seller_verification,name='sellerverification'),
     path('productverification/<int:id>/', views.product_verification, name='productverification'),
     
-    # Attribute Management APIs
-    path('api/create-attribute/', views.create_attribute, name='create_attribute'),
-    path('api/create-attribute-option/', views.create_attribute_option, name='create_attribute_option'),
-    
-    # Verification APIs
-    path('api/verify-seller/', views.verify_seller_ajax, name='verify_seller_ajax'),
-    path('api/verify-product/', views.verify_product_ajax, name='verify_product_ajax'),
+    # Category/Subcategory Management APIs
+    path('api/create-category/', views.create_category, name='create_category'),
+    path('api/save-category/', views.save_category, name='save_category'),
+    path('api/create-subcategory/', views.create_subcategory, name='create_subcategory'),
+    path('api/save-subcategory/', views.save_subcategory, name='save_subcategory'),
+
+    # Category/Subcategory and Banner Management (non-admin namespace to avoid Django admin route conflict)
+    path('dashboard/save-category/', views.save_category, name='save_category'),
+    path('dashboard/save-subcategory/', views.save_subcategory, name='save_subcategory'),
+    path('dashboard/save-banner/', views.save_banner, name='save_banner'),
 ]

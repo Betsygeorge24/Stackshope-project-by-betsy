@@ -24,6 +24,7 @@ import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
 import time
+import re
 from django.views.decorators.http import require_http_methods
 
 
@@ -300,7 +301,6 @@ def checkout_view(request):
         "variant__product__subcategory", "variant__images"
     )
 
-    # Get user's addresses
     user_addresses = Address.objects.filter(user=request.user).order_by(
         "-is_default", "-created_at"
     )
@@ -310,7 +310,6 @@ def checkout_view(request):
     tax_amount = cart_total * 0.18
     total_amount = cart_total + tax_amount
 
-    # Get selected address ID and payment method from POST request
     selected_address_id = request.POST.get("address_id")
     payment_method = request.POST.get("payment_method", "online")
 
@@ -331,7 +330,6 @@ def checkout_view(request):
     }
 
     if request.method == "POST" and payment_method == "cod":
-        # Handle Cash on Delivery
         selected_address_id = request.POST.get("address_id")
         if not selected_address_id:
             messages.error(request, "Please select a delivery address.")
@@ -341,7 +339,6 @@ def checkout_view(request):
             Address, id=selected_address_id, user=request.user
         )
 
-        # Create COD order
         order_obj = Order.objects.create(
             user=request.user,
             address=selected_address,
@@ -349,15 +346,12 @@ def checkout_view(request):
             total_amount=total_amount,
             payment_method="cod",
             payment_status="PENDING",
-            order_status="CONFIRMED",  # COD orders are auto-confirmed
+            order_status="CONFIRMED", 
         )
 
-        # Create OrderItems and decrease stock
         for cart_item in cart_items:
-            # Decrease stock quantity
             cart_item.variant.stock_quantity -= cart_item.quantity
 
-            # Create inventory log
             InventoryLog.objects.create(
                 variant=cart_item.variant,
                 change_amount=-cart_item.quantity,
@@ -375,7 +369,6 @@ def checkout_view(request):
                 price_at_purchase=cart_item.price_at_time,
             )
 
-        # Clear cart
         cart_items.delete()
 
         messages.success(
@@ -383,7 +376,6 @@ def checkout_view(request):
         )
         return redirect("order_success_cod", order_id=order_obj.id)
 
-    # For online payment
     try:
         client = razorpay.Client(
             auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
@@ -462,6 +454,10 @@ def add_address_view(request):
         if not has_addresses:
             is_default_checked = True
 
+        if not re.fullmatch(r"\d{6}", (pincode or "")):
+            messages.error(request, "PIN code must be exactly 6 digits.")
+            return redirect("address")
+
         if is_default_checked:
             Address.objects.filter(user=request.user, is_default=True).update(
                 is_default=False
@@ -521,6 +517,11 @@ def update_address_view(request):
         address.city = request.POST.get("city")
         address.state = request.POST.get("state")
         address.pincode = request.POST.get("pincode")
+
+        if not re.fullmatch(r"\d{6}", (address.pincode or "")):
+            messages.error(request, "PIN code must be exactly 6 digits.")
+            return redirect("address")
+
         address.country = request.POST.get("country")
         address.house_info = request.POST.get("house_info")
         address.landmark = request.POST.get("landmark", "")
@@ -579,19 +580,12 @@ def product_list_view(request):
     except EmptyPage:
         products_page = paginator.page(paginator.num_pages)
 
-    # Add is_in_wishlist for logged-in users
+    wishlist_product_ids = set()
     if request.user.is_authenticated:
-        try:
-            default_wishlist = Wishlist.objects.get(user=request.user, is_default=True)
-            wishlist_variant_ids = set(
-                WishlistItem.objects.filter(wishlist=default_wishlist).values_list(
-                    "variant__product_id", flat=True
-                )
-            )
-        except Wishlist.DoesNotExist:
-            wishlist_variant_ids = set()
-    else:
-        wishlist_variant_ids = set()
+        wishlist_product_ids = set(
+            WishlistItem.objects.filter(wishlist__user=request.user)
+            .values_list("variant__product_id", flat=True)
+        )
 
     cart_items = []
     if request.user.is_authenticated:
@@ -600,7 +594,7 @@ def product_list_view(request):
             cart_items = CartItem.objects.filter(cart=cart)
 
     for product in products_page:
-        product.is_in_wishlist = product.id in wishlist_variant_ids
+        product.is_in_wishlist = product.id in wishlist_product_ids
 
     return render(
         request,
@@ -628,7 +622,7 @@ def product_single_view(request, product_slug=None, product_id=None):
         Product.objects.select_related(
             "subcategory__category", "seller"
         ).prefetch_related(
-            "variants__images", "variants__attributes__option__attribute"
+            "variants__images"
         ),
         approval_status="approved",
         is_active=True,
@@ -650,10 +644,7 @@ def product_single_view(request, product_slug=None, product_id=None):
         return redirect("product_list")
 
     for v in variants:
-        option_descs = []
-        for brid in v.attributes.select_related("option__attribute").all():
-            option_descs.append(f"{brid.option.attribute.name}: {brid.option.value}")
-        v.variant_label = ", ".join(sorted(option_descs)) if option_descs else "Default"
+        v.variant_label = "Default"
 
     reviews = (
         Review.objects.filter(product=product)
@@ -829,10 +820,8 @@ def payment_success(request):
         cart_items = CartItem.objects.filter(cart=cart)
 
         for cart_item in cart_items:
-            # Decrease stock quantity
             cart_item.variant.stock_quantity -= cart_item.quantity
 
-            # Create inventory log
             InventoryLog.objects.create(
                 variant=cart_item.variant,
                 change_amount=-cart_item.quantity,

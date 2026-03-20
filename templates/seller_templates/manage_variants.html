@@ -122,8 +122,6 @@
                             </div>
                         </div>
 
-                   
-
                         <div class="space-y-4">
                             <h3 class="text-xs font-black text-muted uppercase tracking-widest border-b border-muted/20 pb-2 flex items-center gap-2">
                                 <span class="material-icons text-[16px] text-dark">collections</span> Media Files
@@ -175,7 +173,6 @@
                              data-tax="{{ variant.tax_percentage }}"
                              data-weight="{{ variant.weight }}"
                              data-dims="{{ variant.length }} x {{ variant.width }} x {{ variant.height }}"
-                             data-attributes="{% for va in variant.attributes.all %}{{ va.option.attribute.name }}:{{ va.option.value }}{% if not forloop.last %}, {% endif %}{% endfor %}"
                              data-image="{% if variant.images.first %}{{ variant.images.first.image_url.url }}{% else %}{{ '' }}{% endif %}" >
                             
                             <div class="flex justify-between items-start mb-4">
@@ -220,20 +217,6 @@
                                 </span>
                             </div>
 
-                            <div class="bg-white border border-muted/20 p-3 rounded-xl">
-                                <span class="text-[9px] font-black uppercase tracking-widest text-muted block mb-2">Selected Attributes</span>
-                                <div class="flex flex-wrap gap-1.5">
-                                    {% if variant.attributes.exists %}
-                                        {% for va in variant.attributes.all %}
-                                            <span class="bg-dark text-light text-[10px] font-bold px-2 py-0.5 rounded-md">
-                                                <span class="opacity-60 font-medium mr-1">{{ va.option.attribute.name }}:</span>{{ va.option.value }}
-                                            </span>
-                                        {% endfor %}
-                                    {% else %}
-                                        <span class="text-xs text-muted font-bold italic">No attributes assigned</span>
-                                    {% endif %}
-                                </div>
-                            </div>
                             
                         </div>
                         {% empty %}
@@ -267,7 +250,6 @@
                 <p><span class="font-black">Tax:</span> <span id="variantDetailsTax"></span>%</p>
                 <p><span class="font-black">Weight:</span> <span id="variantDetailsWeight"></span> kg</p>
                 <p><span class="font-black">Dimensions (L×W×H):</span> <span id="variantDetailsDims"></span> cm</p>
-                <p><span class="font-black">Attributes:</span> <span id="variantDetailsAttrs"></span></p>
                 <p><span class="font-black">Image:</span> <a id="variantDetailsImage" href="#" class="text-accent underline" target="_blank">Open image</a></p>
             </div>
         </div>
@@ -287,7 +269,6 @@
                 document.getElementById('variantDetailsTax').textContent = card.dataset.tax || '0';
                 document.getElementById('variantDetailsWeight').textContent = card.dataset.weight || '0';
                 document.getElementById('variantDetailsDims').textContent = card.dataset.dims || 'N/A';
-                document.getElementById('variantDetailsAttrs').textContent = card.dataset.attributes || 'None';
                 var imageUrl = card.dataset.image || '#';
                 var imageLink = document.getElementById('variantDetailsImage');
                 imageLink.href = imageUrl;

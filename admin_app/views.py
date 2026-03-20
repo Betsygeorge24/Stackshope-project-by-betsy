@@ -4,30 +4,37 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.contrib import messages
 from core.models import *
-from seller.models import *
+from seller.models import SellerProfile, ProductVariant
 from core.decorators import admin_required
-from .forms import AttributeForm, AttributeOptionForm
+from .forms import (
+    CategoryForm,
+    SubCategoryForm,
+    BannerForm,
+)
 
 
 @admin_required
 def admin_dashboard_view(request):
     product_variants = ProductVariant.objects.all()
     seller = SellerProfile.objects.filter(user__role="SELLER")
+    categories = Category.objects.all()
     subcategories = SubCategory.objects.all()
-    attributes = Attribute.objects.all()
 
     context = {
         "products": product_variants,
         "sellers": seller,
+        "categories": categories,
         "subcategories": subcategories,
-        "attributes": attributes,
+        "category_form": CategoryForm(),
+        "subcategory_form": SubCategoryForm(),
+        "banner_form": BannerForm(),
     }
     return render(request, "admin_templates/admindashboard.html", context)
 
 
 @admin_required
 def seller_verification(request, id):
-    seller = SellerProfile.objects.get_object_or_404(id=id)
+    seller = get_object_or_404(SellerProfile, id=id)
     if request.method == "POST":
         status = request.POST.get("status")
         remarks = request.POST.get("remarks")
@@ -64,121 +71,88 @@ def product_verification(request, id):
     return render(request, "admin_templates/product_verification.html", context)
 
 
-# ==================== ATTRIBUTE MANAGEMENT FORMS ====================
+@admin_required
+@require_http_methods(["POST"])
+def create_category(request):
+    """Legacy alias for save_category."""
+    return save_category(request)
 
 
 @admin_required
 @require_http_methods(["POST"])
-def create_attribute(request):
-    """Handle attribute creation via AJAX or form submission"""
-    form = AttributeForm(request.POST)
-    if form.is_valid():
-        attribute = form.save()
-        messages.success(request, f"Attribute '{attribute.name}' created successfully!")
-        return JsonResponse(
-            {
-                "status": "success",
-                "message": f"Attribute '{attribute.name}' created successfully!",
-                "attribute_id": attribute.id,
-                "attribute_name": attribute.name,
-            }
-        )
+def save_category(request):
+    """Handle category creation or update via regular form submission."""
+    category_id = request.POST.get("id") or request.POST.get("category_id")
+
+    if category_id:
+        category = get_object_or_404(Category, id=category_id)
+        form = CategoryForm(request.POST, request.FILES or None, instance=category)
+        action = "updated"
     else:
-        return JsonResponse(
-            {"status": "error", "message": "Invalid form data", "errors": form.errors},
-            status=400,
-        )
+        form = CategoryForm(request.POST, request.FILES or None)
+        action = "created"
 
-
-@admin_required
-@require_http_methods(["POST"])
-def create_attribute_option(request):
-    """Handle attribute option creation via AJAX or form submission"""
-    form = AttributeOptionForm(request.POST)
     if form.is_valid():
-        option = form.save()
-        messages.success(request, f"Option '{option.value}' added successfully!")
-        return JsonResponse(
-            {
-                "status": "success",
-                "message": f"Option '{option.value}' added to {option.attribute.name}!",
-                "option_id": option.id,
-                "option_value": option.value,
-                "attribute": option.attribute.name,
-            }
-        )
+        category = form.save()
+        messages.success(request, f"Category '{category.name}' {action} successfully!")
     else:
-        return JsonResponse(
-            {"status": "error", "message": "Invalid form data", "errors": form.errors},
-            status=400,
-        )
+        messages.error(request, "Category save failed: " + "; ".join([f"{k}: {', '.join(v)}" for k, v in form.errors.items()]))
+
+    return redirect("admin_dashboard")
 
 
 @admin_required
 @require_http_methods(["POST"])
-def verify_seller_ajax(request):
-    """Handle seller verification via AJAX"""
-    seller_id = request.POST.get("seller_id")
-    status = request.POST.get("status")
-    remarks = request.POST.get("remarks", "")
-
-    try:
-        seller = SellerProfile.objects.get(id=seller_id)
-        seller.verification_status = status
-        seller.admin_remarks = remarks
-
-        # Update CustomUser field explicitly
-        if status == "approved":
-            seller.user.is_verified_seller = True
-        else:
-            seller.user.is_verified_seller = False
-        seller.user.save()
-
-        seller.save()
-
-        return JsonResponse(
-            {
-                "status": "success",
-                "message": f"Seller '{seller.store_name}' status updated to {status}!",
-                "seller_id": seller.id,
-                "verification_status": seller.verification_status,
-                "is_verified_seller": seller.user.is_verified_seller,
-            }
-        )
-    except SellerProfile.DoesNotExist:
-        return JsonResponse(
-            {"status": "error", "message": "Seller not found"}, status=404
-        )
-    except Exception as e:
-        return JsonResponse({"status": "error", "message": str(e)}, status=400)
+def create_subcategory(request):
+    """Legacy alias for save_subcategory."""
+    return save_subcategory(request)
 
 
 @admin_required
 @require_http_methods(["POST"])
-def verify_product_ajax(request):
-    """Handle product verification via AJAX"""
-    product_variant_id = request.POST.get("product_id")
-    status = request.POST.get("status")
-    remarks = request.POST.get("remarks", "")
+def save_subcategory(request):
+    """Handle subcategory creation or update via regular form submission."""
+    subcategory_id = request.POST.get("id") or request.POST.get("subcategory_id")
 
-    try:
-        product_variant = ProductVariant.objects.get(id=product_variant_id)
-        product = product_variant.product
-        product.approval_status = status
-        product.admin_remarks = remarks
-        product.save()
+    if subcategory_id:
+        subcategory = get_object_or_404(SubCategory, id=subcategory_id)
+        form = SubCategoryForm(request.POST, request.FILES or None, instance=subcategory)
+        action = "updated"
+    else:
+        form = SubCategoryForm(request.POST, request.FILES or None)
+        action = "created"
 
-        return JsonResponse(
-            {
-                "status": "success",
-                "message": f"Product '{product.name}' status updated to {status}!",
-                "product_id": product_variant.id,
-                "approval_status": product.approval_status,
-            }
-        )
-    except ProductVariant.DoesNotExist:
-        return JsonResponse(
-            {"status": "error", "message": "Product not found"}, status=404
-        )
-    except Exception as e:
-        return JsonResponse({"status": "error", "message": str(e)}, status=400)
+    if form.is_valid():
+        subcategory = form.save()
+        messages.success(request, f"SubCategory '{subcategory.name}' {action} successfully!")
+    else:
+        messages.error(request, "SubCategory save failed: " + "; ".join([f"{k}: {', '.join(v)}" for k, v in form.errors.items()]))
+
+    return redirect("admin_dashboard")
+
+
+@admin_required
+@require_http_methods(["POST"])
+def save_banner(request):
+    banner_id = request.POST.get("id") or request.POST.get("banner_id")
+    if banner_id:
+        banner = get_object_or_404(Banner, id=banner_id)
+        form = BannerForm(request.POST, request.FILES or None, instance=banner)
+        action = "updated"
+    else:
+        form = BannerForm(request.POST, request.FILES or None)
+        action = "created"
+
+    if form.is_valid():
+        b = form.save()
+        messages.success(request, f"Banner '{b.title}' {action} successfully!")
+    else:
+        messages.error(request, "Banner save failed: " + "; ".join([f"{k}: {', '.join(v)}" for k, v in form.errors.items()]))
+
+    return redirect("admin_dashboard")
+
+
+
+
+# Seller/Product verification is now handled with normal form POST submission via seller_verification and product_verification views
+# (No AJAX variant functions are required in this codepath.)

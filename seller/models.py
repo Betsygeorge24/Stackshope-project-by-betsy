@@ -181,53 +181,6 @@ class ProductImage(models.Model):
     def __str__(self):
         return f"Image for {self.variant.product.name} ({'Primary' if self.is_primary else 'Secondary'})"
 
-class Attribute(models.Model):
-    name = models.CharField(max_length=100)
-    subcategory = models.ForeignKey(SubCategory,on_delete=models.CASCADE,related_name="attributes",null=True,blank=True)
-    
-    class Meta:
-        verbose_name = "Attribute"
-        verbose_name_plural = "Attributes"
-        indexes = [
-            models.Index(fields=['subcategory']),
-        ]
-    
-    def __str__(self):
-        return self.name
-
-
-class AttributeOption(models.Model):
-    attribute = models.ForeignKey(Attribute, on_delete=models.CASCADE, related_name="options")
-    value = models.CharField(max_length=100)
-    
-    class Meta:
-        verbose_name = "Attribute Option"
-        verbose_name_plural = "Attribute Options"
-        indexes = [
-            models.Index(fields=['attribute']),
-        ]
-        unique_together = [['attribute', 'value']]
-    
-    def __str__(self):
-        return f"{self.attribute.name}: {self.value}"
-
-class VariantAttributeBridge(models.Model):
-    variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE, related_name="attributes")
-    option = models.ForeignKey(AttributeOption, on_delete=models.CASCADE, related_name="variants")
-    
-    class Meta:
-        verbose_name = "Variant Attribute"
-        verbose_name_plural = "Variant Attributes"
-        unique_together = [['variant', 'option']]
-        indexes = [
-            models.Index(fields=['variant']),
-            models.Index(fields=['option']),
-        ]
-    
-    def __str__(self):
-        return f"{self.variant} - {self.option}"
-
-
 class InventoryLog(models.Model):
     variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE, related_name="inventory_logs")
     change_amount = models.IntegerField()

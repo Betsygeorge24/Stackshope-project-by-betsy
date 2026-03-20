@@ -150,7 +150,6 @@ def update_product(request, product_slug):
 
     categories = Category.objects.all()
     subcategories = SubCategory.objects.all()
-    attributes = Attribute.objects.prefetch_related("options").all()
 
     if request.method == "POST":
 
@@ -173,16 +172,6 @@ def update_product(request, product_slug):
         variant.height = request.POST.get("height") or 0
         variant.tax_percentage = request.POST.get("tax_percentage") or 0
         variant.save()
-
-        
-        VariantAttributeBridge.objects.filter(variant=variant).delete()
-        for attribute in attributes:
-            option_id = request.POST.get(f"attribute_{attribute.id}")
-            if option_id:
-                VariantAttributeBridge.objects.create(
-                    variant=variant,
-                    option_id=option_id
-                )
 
         
         uploaded_primary_image = request.FILES.get("primary_image")
@@ -210,7 +199,6 @@ def update_product(request, product_slug):
         "variant": variant,
         "categories": categories,
         "subcategories": subcategories,
-        "attributes": attributes,
         "primary_image": primary_image,
         "additional_images": additional_images,
     }
@@ -335,15 +323,95 @@ def seller_bridge(request):
         return redirect("login")
     return render(request, "seller_templates/seller_bridge.html")
 
- 
+
+def seller_broche_view(request):
+    if request.user.is_authenticated:
+        if (
+            SellerProfile.objects.filter(user=request.user).exists()
+            and request.user.is_seller
+            and request.user.is_verified_seller
+        ):
+            return redirect("dashboard")
+        elif (
+            SellerProfile.objects.filter(user=request.user).exists()
+            and request.user.is_seller
+        ):
+            return redirect("seller-profile")
+        else:
+            return redirect("seller-bridge")
+    return render(request, "seller_templates/seller_broche.html")
+
+
+@verified_seller_required
+def add_product(request):
+    seller = request.user.seller_profile
+    categories = Category.objects.all()
+    subcategories = SubCategory.objects.all()
+
+    if request.method == "POST":
+
+        product = Product.objects.create(
+            seller=seller,
+            subcategory_id=request.POST.get("subcategory"),
+            name=request.POST.get("name"),
+            description=request.POST.get("description"),
+            brand=request.POST.get("brand"),
+            model_number=request.POST.get("model_number"),
+        )
+
+        variant = ProductVariant.objects.create(
+            product=product,
+            mrp=request.POST.get("mrp") or 0,
+            selling_price=request.POST.get("selling_price") or 0,
+            cost_price=request.POST.get("cost_price") or 0,
+            stock_quantity=request.POST.get("stock_quantity") or 0,
+            weight=request.POST.get("weight") or 0,
+            length=request.POST.get("length") or 0,
+            width=request.POST.get("width") or 0,
+            height=request.POST.get("height") or 0,
+            tax_percentage=request.POST.get("tax_percentage") or 0,
+        )
+
+        primary_image = request.FILES.get("primary_image")
+        if primary_image:
+            ProductImage.objects.create(
+                variant=variant, image_url=primary_image, is_primary=True
+            )
+
+        additional_images = request.FILES.getlist("additional_images")
+        for image in additional_images:
+            ProductImage.objects.create(
+                variant=variant, image_url=image, is_primary=False
+            )
+
+        return redirect("dashboard")
+    context = {
+        "categories": categories,
+        "subcategories": subcategories,
+    }
+    return render(request, "seller_templates/add_product.html", context)
+
+
+@verified_seller_required
+def update_product(request, product_slug):
+    seller = request.user.seller_profile
+    product = get_object_or_404(Product, slug=product_slug, seller=seller)
+
+    if request.method == "POST":
+        product.name = request.POST.get("name")
+        product.description = request.POST.get("description")
+        product.brand = request.POST.get("brand")
+        product.save()
+        return redirect("dashboard")
+
+    return render(request, "seller_templates/update_product.html", {"product": product})
+
+
 @verified_seller_required
 def manage_variants(request, product_slug):
     seller = request.user.seller_profile
     product = get_object_or_404(Product, slug=product_slug, seller=seller)
-  
-    variants = product.variants.prefetch_related(
-        "images", "attributes__option__attribute"
-    )
+    variants = product.variants.prefetch_related("images")
 
     edit_variant = None
     selected_option_ids = []
@@ -365,10 +433,6 @@ def manage_variants(request, product_slug):
             variant.tax_percentage = request.POST.get("tax_percentage") or 0
             variant.save()
 
-            
-            VariantAttributeBridge.objects.filter(variant=variant).delete()
-
-          
             primary_image = request.FILES.get("primary_image")
             if primary_image:
                 ProductImage.objects.filter(variant=variant, is_primary=True).delete()
@@ -398,7 +462,6 @@ def manage_variants(request, product_slug):
             tax_percentage=request.POST.get("tax_percentage") or 0,
         )
 
-       
         primary_image = request.FILES.get("primary_image")
         if primary_image:
             ProductImage.objects.create(
@@ -419,11 +482,6 @@ def manage_variants(request, product_slug):
         edit_variant = get_object_or_404(
             ProductVariant, id=edit_variant_id, product=product
         )
-        selected_option_ids = list(
-            VariantAttributeBridge.objects.filter(variant=edit_variant).values_list(
-                "option_id", flat=True
-            )
-        )
 
     return render(
         request,
@@ -432,7 +490,6 @@ def manage_variants(request, product_slug):
             "product": product,
             "variants": variants,
             "edit_variant": edit_variant,
-            "selected_option_ids": selected_option_ids,
         },
     )
 
