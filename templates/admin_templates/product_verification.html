@@ -283,7 +283,7 @@
                             </label>
 
                             <label class="block relative cursor-pointer group">
-                                <input type="radio" name="status" value="PENDING" class="peer sr-only status-radio" {% if product.approval_status == 'PENDING' %}checked{% endif %} data-text="Pending Review" data-color="yellow" data-icon="hourglass_empty">
+                                <input type="radio" name="status" value="pending" class="peer sr-only status-radio" {% if product.approval_status == 'pending' %}checked{% endif %} data-text="Pending Review" data-color="yellow" data-icon="hourglass_empty">
                                 <div class="rounded-xl border-2 border-muted/30 p-4 transition-all duration-200 peer-checked:border-yellow-500 peer-checked:bg-yellow-50 peer-checked:shadow-md hover:bg-light/50 flex items-center justify-between">
                                     <div class="flex items-center gap-3">
                                         <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm border border-muted/20 peer-checked:border-yellow-200 text-muted peer-checked:text-yellow-600 transition-colors">

@@ -39,6 +39,7 @@ urlpatterns = [
     path('set-default-address/',views.set_default_address_view,name='set_default_address'),
     #----------------------------------------------------------------------------
 
+    path('settings/', views.settings_view, name='settings'),
     # order history and address----------------------
     path('order-history/',views.order_history_view,name='order-history'),
     path('my-reviews/', views.my_reviews_view, name='my_reviews'),

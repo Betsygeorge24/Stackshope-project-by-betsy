@@ -391,7 +391,6 @@
 
     {% include "customer_templates/Footer.html" %}
 
-    <script src="{% static 'core/homehtml/animations.js' %}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const mainTrack = document.getElementById('carousel-track');
@@ -424,7 +423,7 @@
                 }
 
                 function startAutoplay() {
-                    autoplayInterval = setInterval(autoplay, 5000);
+                    autoplayInterval = setInterval(autoplay, 10000);
                 }
 
                 function stopAutoplay() {

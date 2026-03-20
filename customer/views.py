@@ -45,7 +45,32 @@ def user_profile_view(request):
         if image:
             user.profile_image = image
         user.save()
+        messages.success(request, "Profile updated successfully")
+
     return render(request, "customer_templates/profile.html", {"user": user})
+
+
+@customer_required
+def settings_view(request):
+    user = request.user
+    if request.method == "POST":
+        current_password = request.POST.get("current_password")
+        new_password = request.POST.get("new_password")
+        confirm_password = request.POST.get("confirm_password")
+
+        if not user.check_password(current_password):
+            messages.error(request, "Current password is incorrect.")
+        elif new_password != confirm_password:
+            messages.error(request, "New password and confirm password do not match.")
+        elif len(new_password) < 8:
+            messages.error(request, "New password must be at least 8 characters long.")
+        else:
+            user.set_password(new_password)
+            user.save()
+            messages.success(request, "Password changed successfully.")
+            return redirect("settings")
+
+    return render(request, "customer_templates/settings.html", {"user": user})
 
 
 # ------------------------------------------------------------------------------

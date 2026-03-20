@@ -2,10 +2,14 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.tokens import default_token_generator
 from django.utils import timezone
 from datetime import timedelta
 from django.core.mail import send_mail
 from django.conf import settings
+from django.urls import reverse
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
 from core.decorators import admin_required, seller_required
 from customer.models import Cart, CartItem, WishlistItem
 from .models import CustomUser, EmailOTP, Category, Banner
@@ -363,6 +367,96 @@ def resend_email_otp_view(request):
     _send_verification_otp(user)
     messages.success(request, "A new OTP has been sent to your email.")
     return redirect("verify_email")
+
+
+def forgot_password_view(request):
+    if request.method == "POST":
+        email = request.POST.get("email")
+        if not email:
+            messages.error(request, "Please enter your email address.")
+            return redirect("forgot_password")
+
+        try:
+            user = CustomUser.objects.get(email=email)
+        except CustomUser.DoesNotExist:
+            user = None
+
+        if user:
+            uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+            token = default_token_generator.make_token(user)
+            reset_url = request.build_absolute_uri(
+                reverse("reset_password", kwargs={"uidb64": uidb64, "token": token})
+            )
+            subject = "StackShop Password Reset"
+            message = (
+                f"Hi {user.first_name or user.username},\n\n"
+                f"Please click the link below to reset your password:\n{reset_url}\n\n"
+                "If you did not request this, please ignore this email.\n\n"
+                "Thanks,\nStackShop Team"
+            )
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                fail_silently=True,
+            )
+
+        # Always show the same response for security reasons.
+        messages.success(
+            request,
+            "If an account with that email exists, a password reset link has been sent.\nPlease check your email."
+        )
+        return redirect("login")
+
+    return render(request, "core_templates/forgot_password.html")
+
+
+def reset_password_view(request, uidb64, token):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = CustomUser.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
+        user = None
+
+    if user is None or not default_token_generator.check_token(user, token):
+        messages.error(request, "The password reset link is invalid or has expired.")
+        return redirect("forgot_password")
+
+    if request.method == "POST":
+        new_password = request.POST.get("new_password")
+        confirm_password = request.POST.get("confirm_password")
+
+        if not new_password or not confirm_password:
+            messages.error(request, "Please complete all password fields.")
+            return redirect(
+                "reset_password",
+                uidb64=uidb64,
+                token=token,
+            )
+
+        if new_password != confirm_password:
+            messages.error(request, "New password and confirm password do not match.")
+            return redirect(
+                "reset_password",
+                uidb64=uidb64,
+                token=token,
+            )
+
+        if len(new_password) < 8:
+            messages.error(request, "New password must be at least 8 characters long.")
+            return redirect(
+                "reset_password",
+                uidb64=uidb64,
+                token=token,
+            )
+
+        user.set_password(new_password)
+        user.save()
+        messages.success(request, "Your password has been reset successfully. Please login.")
+        return redirect("login")
+
+    return render(request, "core_templates/reset_password.html")
 
 
 def login_view(request):

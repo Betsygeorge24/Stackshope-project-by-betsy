@@ -216,7 +216,31 @@ def delete_product(request, product_slug):
 
     return redirect("dashboard")
 
-######################################################################################################################
+
+@login_required
+@seller_required
+def seller_settings_view(request):
+    user = request.user
+    if request.method == "POST":
+        current_password = request.POST.get("current_password")
+        new_password = request.POST.get("new_password")
+        confirm_password = request.POST.get("confirm_password")
+
+        if not user.check_password(current_password):
+            messages.error(request, "Current password is incorrect.")
+        elif new_password != confirm_password:
+            messages.error(request, "New password and confirm password do not match.")
+        elif len(new_password) < 8:
+            messages.error(request, "New password must be at least 8 characters long.")
+        else:
+            user.set_password(new_password)
+            user.save()
+            messages.success(request, "Password changed successfully.")
+            return redirect("profile")
+
+    return render(request, "seller_templates/settings.html", {"user": user})
+
+
 #####################################################################################################################
 def seller_broche_view(request):
     if request.user.is_authenticated:

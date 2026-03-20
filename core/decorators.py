@@ -28,10 +28,10 @@ def verified_seller_required(view_func):
     def _wrapped_view(request, *args, **kwargs):
         if not request.user.is_authenticated:
             messages.error(request,'Unauthorized !! user not authenticated')
-            return redirect('login')
+            return redirect('seller-profile')
         if request.user.is_seller != True:
             messages.error(request,'Unauthorized !! Not a Seller')
-            return redirect('becomeseller')        
+            return redirect('seller-profile')        
         if not getattr(request.user, "is_verified_seller", False):
             messages.error(request,'Unauthorized !! not a verified seller')
             return redirect('seller-profile')

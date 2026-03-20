@@ -61,11 +61,16 @@ def product_verification(request, id):
     product_variant = get_object_or_404(ProductVariant, id=id)
     product = product_variant.product
     if request.method == "POST":
-        status = request.POST.get("status")
-        remarks = request.POST.get("remarks")
+        status = (request.POST.get("status") or "").strip().lower()
+        if status not in ["pending", "approved", "rejected"]:
+            messages.error(request, "Invalid status value. Please choose pending, approved, or rejected.")
+            return redirect(request.path)
+
+        remarks = request.POST.get("remarks", "").strip()
         product.approval_status = status
         product.admin_remarks = remarks
         product.save()
+        messages.success(request, f"Product '{product.name}' status updated to {status}.")
         return redirect(f"{reverse('admin_dashboard')}#products")
     context = {"product": product}
     return render(request, "admin_templates/product_verification.html", context)
