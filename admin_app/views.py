@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.contrib import messages
 from core.models import *
-from seller.models import SellerProfile, ProductVariant
+from seller.models import SellerProfile, Product, ProductVariant
 from core.decorators import admin_required
 from .forms import (
     CategoryForm,
@@ -58,8 +58,8 @@ def seller_verification(request, id):
 
 @admin_required
 def product_verification(request, id):
-    product_variant = get_object_or_404(ProductVariant, id=id)
-    product = product_variant.product
+    # now operate on Product directly (id is product id)
+    product = get_object_or_404(Product, id=id)
     if request.method == "POST":
         status = (request.POST.get("status") or "").strip().lower()
         if status not in ["pending", "approved", "rejected"]:

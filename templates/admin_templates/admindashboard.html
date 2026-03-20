@@ -297,17 +297,17 @@
 
                                 <td class="p-4 text-right">
                                     {% if product.product.approval_status|lower == 'pending' %}
-                                    <a href="{% url 'productverification' product.id %}"
+                                    <a href="{% url 'productverification' product.product.id %}"
                                         class="text-xs font-bold bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors shadow-sm">
                                         Verify
                                     </a>
                                     {% elif product.product.approval_status|lower == 'approved' %}
-                                    <a href="{% url 'productverification' product.id %}"
+                                    <a href="{% url 'productverification' product.product.id %}"
                                         class="text-xs font-bold border border-green-500 text-green-600 px-4 py-2 rounded-lg hover:bg-green-50 transition-colors">
                                         Edit Remarks
                                     </a>
                                     {% elif product.product.approval_status|lower == 'rejected' %}
-                                    <a href="{% url 'productverification' product.id %}"
+                                    <a href="{% url 'productverification' product.product.id %}"
                                         class="text-xs font-bold border border-red-500 text-red-600 px-4 py-2 rounded-lg hover:bg-red-50 transition-colors">
                                         Edit Remarks
                                     </a>

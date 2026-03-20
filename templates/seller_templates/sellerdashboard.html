@@ -90,6 +90,21 @@
                 </a>
             </div>
         </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+            <div class="rounded-xl p-4 bg-white border border-green-200 shadow-sm">
+                <p class="text-xs font-black uppercase tracking-widest text-green-600">Approved</p>
+                <p class="text-2xl font-extrabold text-green-700">{{ approved_products|default:0 }}</p>
+            </div>
+            <div class="rounded-xl p-4 bg-white border border-orange-200 shadow-sm">
+                <p class="text-xs font-black uppercase tracking-widest text-orange-600">Pending</p>
+                <p class="text-2xl font-extrabold text-orange-700">{{ pending_products|default:0 }}</p>
+            </div>
+            <div class="rounded-xl p-4 bg-white border border-red-200 shadow-sm">
+                <p class="text-xs font-black uppercase tracking-widest text-red-600">Rejected</p>
+                <p class="text-2xl font-extrabold text-red-700">{{ rejected_products|default:0 }}</p>
+            </div>
+        </div>
         
         <div class="bg-white rounded-3xl shadow-sm border border-muted/30 overflow-hidden mb-20">
             
@@ -133,7 +148,13 @@
 
                             <div class="flex items-center justify-between lg:hidden w-full pl-18">
                                 <span class="font-black text-dark">₹{{ product.variants.first.selling_price|default:"--" }}</span>
-                                <span class="bg-green-50 text-green-600 border border-green-100 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest">Active</span>
+                                {% if product.approval_status == 'approved' %}
+                                    <span class="bg-green-50 text-green-600 border border-green-200 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest">{{ product.get_approval_status_display }}</span>
+                                {% elif product.approval_status == 'pending' %}
+                                    <span class="bg-orange-50 text-orange-600 border border-orange-200 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest">{{ product.get_approval_status_display }}</span>
+                                {% else %}
+                                    <span class="bg-red-50 text-red-600 border border-red-200 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest">{{ product.get_approval_status_display }}</span>
+                                {% endif %}
                             </div>
 
                             <div class="hidden lg:block col-span-2 font-black text-dark text-base">
@@ -141,9 +162,13 @@
                             </div>
 
                             <div class="hidden lg:block col-span-2">
-                                <span class="bg-green-50 text-green-600 border border-green-200 px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-widest shadow-sm">
-                                    Active
-                                </span>
+                                {% if product.approval_status == 'approved' %}
+                                    <span class="bg-green-50 text-green-600 border border-green-200 px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-widest shadow-sm">{{ product.get_approval_status_display }}</span>
+                                {% elif product.approval_status == 'pending' %}
+                                    <span class="bg-orange-50 text-orange-600 border border-orange-200 px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-widest shadow-sm">{{ product.get_approval_status_display }}</span>
+                                {% else %}
+                                    <span class="bg-red-50 text-red-600 border border-red-200 px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-widest shadow-sm">{{ product.get_approval_status_display }}</span>
+                                {% endif %}
                             </div>
 
                             <div class="col-span-3 flex justify-end items-center gap-2 w-full mt-2 lg:mt-0">

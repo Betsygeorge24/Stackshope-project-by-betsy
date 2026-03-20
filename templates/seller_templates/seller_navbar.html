@@ -26,6 +26,11 @@
                    class="transition-all duration-200 active:scale-95 {% if request.resolver_match.url_name == 'dashboard' %}text-light border-b-2 border-accent pb-1{% else %}text-muted hover:text-light{% endif %}">
                    My Products
                 </a>
+
+                <a href="{% url 'seller_inventory' %}" 
+                   class="transition-all duration-200 active:scale-95 {% if request.resolver_match.url_name == 'seller_inventory' %}text-light border-b-2 border-accent pb-1{% else %}text-muted hover:text-light{% endif %}">
+                   Inventory
+                </a>
                 
                 <a href="{% url 'seller_customers_orders' %}" 
                    class="transition-all duration-200 active:scale-95 {% if request.resolver_match.url_name == 'seller_customers_orders' %}text-light border-b-2 border-accent pb-1{% else %}text-muted hover:text-light{% endif %}">
@@ -100,6 +105,7 @@
             
             <a href="{% url 'customer_reviews' %}" class="text-light font-semibold px-4 py-3 rounded-lg hover:bg-light/10 transition-colors">Reviews</a>
             <a href="{% url 'dashboard' %}" class="text-light font-semibold px-4 py-3 rounded-lg hover:bg-light/10 transition-colors">My Products</a>
+            <a href="{% url 'seller_inventory' %}" class="text-light font-semibold px-4 py-3 rounded-lg hover:bg-light/10 transition-colors">Inventory</a>
             <a href="{% url 'seller_customers_orders' %}" class="flex items-center justify-between text-light font-semibold px-4 py-3 rounded-lg hover:bg-light/10 transition-colors">
                 Orders <span class="bg-accent text-dark text-xs px-2 py-0.5 rounded-full">5</span>
             </a>

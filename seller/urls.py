@@ -15,6 +15,7 @@ urlpatterns = [
     path('customer_reviews/',views.customer_reviews,name='customer_reviews'),
     path('update-order-status/', views.update_order_status, name='update_order_status'),
     path('seller_analytics/', views.seller_analytics, name='seller_analytics'),
+    path('seller-inventory/', views.seller_inventory_view, name='seller_inventory'),
     path('seller-settings/', views.seller_settings_view, name='seller_settings'),
     path("delete-image/<int:image_id>/", views.delete_product_image, name="delete_product_image"),
 ]

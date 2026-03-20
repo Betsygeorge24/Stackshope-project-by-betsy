@@ -77,9 +77,16 @@ def dashboard_view(request):
         or 0
     )
 
+    approved_products = products.filter(approval_status="approved").count()
+    pending_products = products.filter(approval_status="pending").count()
+    rejected_products = products.filter(approval_status="rejected").count()
+
     context = {
         "products": products,
         "total_products": total_products,
+        "approved_products": approved_products,
+        "pending_products": pending_products,
+        "rejected_products": rejected_products,
         "active_orders": active_orders,
         "needs_shipping": needs_shipping,
         "average_rating": avg_rating,
@@ -239,6 +246,66 @@ def seller_settings_view(request):
             return redirect("profile")
 
     return render(request, "seller_templates/settings.html", {"user": user})
+
+
+@verified_seller_required
+def seller_inventory_view(request):
+    seller = request.user.seller_profile
+    variants = ProductVariant.objects.filter(product__seller=seller).select_related("product").order_by("-id")
+    logs = (
+        InventoryLog.objects.filter(variant__product__seller=seller)
+        .select_related("variant", "performed_by")
+        .order_by("-created_at")[:200]
+    )
+
+    # Populate old_stock for display to avoid unsupported template arithmetic operations
+    for log in logs:
+        log.old_stock = log.variant.stock_quantity - log.change_amount
+
+    if request.method == "POST":
+        variant_id = request.POST.get("variant_id")
+        quantity = request.POST.get("quantity")
+        reason = request.POST.get("reason", "Inventory update")
+
+        if not variant_id or not quantity:
+            messages.error(request, "Please select a variant and quantity to update.")
+            return redirect("seller_inventory")
+
+        variant = get_object_or_404(ProductVariant, id=variant_id, product__seller=seller)
+
+        try:
+            quantity_delta = int(quantity)
+        except ValueError:
+            messages.error(request, "Quantity must be an integer.")
+            return redirect("seller_inventory")
+
+        old_stock = variant.stock_quantity
+        new_stock = old_stock + quantity_delta
+        if new_stock < 0:
+            messages.error(request, "Stock cannot go below zero.")
+            return redirect("seller_inventory")
+
+        variant.stock_quantity = new_stock
+        variant.save()
+
+        InventoryLog.objects.create(
+            variant=variant,
+            change_amount=quantity_delta,
+            reason=reason,
+            performed_by=request.user,
+        )
+
+        messages.success(request, f"Inventory updated for {variant.sku_code}: {old_stock} → {new_stock}.")
+        return redirect("seller_inventory")
+
+    return render(
+        request,
+        "seller_templates/seller_inventory.html",
+        {
+            "variants": variants,
+            "logs": logs,
+        },
+    )
 
 
 #####################################################################################################################
