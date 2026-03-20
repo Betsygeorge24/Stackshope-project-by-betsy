@@ -4,15 +4,12 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.contrib import messages
 from core.models import *
-from seller.models import *
+from seller.models import SellerProfile, ProductVariant
 from core.decorators import admin_required
 from .forms import (
-    AttributeForm,
-    AttributeOptionForm,
     CategoryForm,
     SubCategoryForm,
     BannerForm,
-    VariantAttributeBridgeForm,
 )
 
 
@@ -22,20 +19,15 @@ def admin_dashboard_view(request):
     seller = SellerProfile.objects.filter(user__role="SELLER")
     categories = Category.objects.all()
     subcategories = SubCategory.objects.all()
-    attributes = Attribute.objects.all()
 
     context = {
         "products": product_variants,
         "sellers": seller,
         "categories": categories,
         "subcategories": subcategories,
-        "attributes": attributes,
-        "attribute_form": AttributeForm(),
-        "attribute_option_form": AttributeOptionForm(),
         "category_form": CategoryForm(),
         "subcategory_form": SubCategoryForm(),
         "banner_form": BannerForm(),
-        "bridge_form": VariantAttributeBridgeForm(),
     }
     return render(request, "admin_templates/admindashboard.html", context)
 
@@ -77,38 +69,6 @@ def product_verification(request, id):
         return redirect(f"{reverse('admin_dashboard')}#products")
     context = {"product": product}
     return render(request, "admin_templates/product_verification.html", context)
-
-
-# ==================== ATTRIBUTE MANAGEMENT FORMS ====================
-
-
-@admin_required
-@require_http_methods(["POST"])
-def create_attribute(request):
-    """Legacy alias for save_attribute."""
-    return save_attribute(request)
-
-
-@admin_required
-@require_http_methods(["POST"])
-def save_attribute(request):
-    """Handle attribute creation or update via regular form submission."""
-    attribute_id = request.POST.get("id") or request.POST.get("attribute_id")
-    if attribute_id:
-        attribute = get_object_or_404(Attribute, id=attribute_id)
-        form = AttributeForm(request.POST, instance=attribute)
-        action = "updated"
-    else:
-        form = AttributeForm(request.POST)
-        action = "created"
-
-    if form.is_valid():
-        attribute = form.save()
-        messages.success(request, f"Attribute '{attribute.name}' {action} successfully!")
-    else:
-        messages.error(request, "Attribute save failed: " + "; ".join([f"{k}: {', '.join(v)}" for k, v in form.errors.items()]))
-
-    return redirect("admin_dashboard")
 
 
 @admin_required
@@ -173,35 +133,6 @@ def save_subcategory(request):
 
 @admin_required
 @require_http_methods(["POST"])
-def create_attribute_option(request):
-    """Legacy alias for save_attribute_option."""
-    return save_attribute_option(request)
-
-
-@admin_required
-@require_http_methods(["POST"])
-def save_attribute_option(request):
-    """Handle attribute option creation or update via regular form submission."""
-    option_id = request.POST.get("id") or request.POST.get("attribute_option_id")
-    if option_id:
-        option = get_object_or_404(AttributeOption, id=option_id)
-        form = AttributeOptionForm(request.POST, instance=option)
-        action = "updated"
-    else:
-        form = AttributeOptionForm(request.POST)
-        action = "added"
-
-    if form.is_valid():
-        option = form.save()
-        messages.success(request, f"Option '{option.value}' {action} successfully!")
-    else:
-        messages.error(request, "Attribute option save failed: " + "; ".join([f"{k}: {', '.join(v)}" for k, v in form.errors.items()]))
-
-    return redirect("admin_dashboard")
-
-
-@admin_required
-@require_http_methods(["POST"])
 def save_banner(request):
     banner_id = request.POST.get("id") or request.POST.get("banner_id")
     if banner_id:
@@ -221,25 +152,6 @@ def save_banner(request):
     return redirect("admin_dashboard")
 
 
-@admin_required
-@require_http_methods(["POST"])
-def save_variant_attribute_bridge(request):
-    bridge_id = request.POST.get("id") or request.POST.get("bridge_id")
-    if bridge_id:
-        bridge = get_object_or_404(VariantAttributeBridge, id=bridge_id)
-        form = VariantAttributeBridgeForm(request.POST, instance=bridge)
-        action = "updated"
-    else:
-        form = VariantAttributeBridgeForm(request.POST)
-        action = "created"
-
-    if form.is_valid():
-        b = form.save()
-        messages.success(request, f"Attribute bridge for variant '{b.variant}' and option '{b.option}' {action} successfully!")
-    else:
-        messages.error(request, "Attribute bridge save failed: " + "; ".join([f"{k}: {', '.join(v)}" for k, v in form.errors.items()]))
-
-    return redirect("admin_dashboard")
 
 
 # Seller/Product verification is now handled with normal form POST submission via seller_verification and product_verification views

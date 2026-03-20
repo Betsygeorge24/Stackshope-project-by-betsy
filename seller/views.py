@@ -5,9 +5,6 @@ from core.decorators import seller_required, verified_seller_required
 from .models import (
     SellerProfile,
     Product,
-    SubCategory,
-    Attribute,
-    VariantAttributeBridge,
     ProductVariant,
     ProductImage,
 )
@@ -214,7 +211,6 @@ def add_product(request):
     seller = request.user.seller_profile
     categories = Category.objects.all()
     subcategories = SubCategory.objects.all()
-    attributes = Attribute.objects.prefetch_related("options").all()
 
     if request.method == "POST":
 
@@ -240,12 +236,6 @@ def add_product(request):
             tax_percentage=request.POST.get("tax_percentage") or 0,
         )
 
-        for attribute in attributes:
-            option_id = request.POST.get(f"attribute_{attribute.id}")
-            if option_id:
-                VariantAttributeBridge.objects.create(
-                    variant=variant, option_id=option_id
-                )
         primary_image = request.FILES.get("primary_image")
         if primary_image:
             ProductImage.objects.create(
@@ -262,7 +252,6 @@ def add_product(request):
     context = {
         "categories": categories,
         "subcategories": subcategories,
-        "attributes": attributes,
     }
     return render(request, "seller_templates/add_product.html", context)
 
@@ -286,12 +275,7 @@ def update_product(request, product_slug):
 def manage_variants(request, product_slug):
     seller = request.user.seller_profile
     product = get_object_or_404(Product, slug=product_slug, seller=seller)
-    attributes = Attribute.objects.filter(
-        subcategory=product.subcategory
-    ).prefetch_related("options")
-    variants = product.variants.prefetch_related(
-        "images", "attributes__option__attribute"
-    )
+    variants = product.variants.prefetch_related("images")
 
     edit_variant = None
     selected_option_ids = []
@@ -312,14 +296,6 @@ def manage_variants(request, product_slug):
             variant.height = request.POST.get("height") or 0
             variant.tax_percentage = request.POST.get("tax_percentage") or 0
             variant.save()
-
-            VariantAttributeBridge.objects.filter(variant=variant).delete()
-            for attribute in attributes:
-                option_id = request.POST.get(f"attribute_{attribute.id}")
-                if option_id:
-                    VariantAttributeBridge.objects.create(
-                        variant=variant, option_id=option_id
-                    )
 
             primary_image = request.FILES.get("primary_image")
             if primary_image:
@@ -351,13 +327,6 @@ def manage_variants(request, product_slug):
             tax_percentage=request.POST.get("tax_percentage") or 0,
         )
 
-        for attribute in attributes:
-            option_id = request.POST.get(f"attribute_{attribute.id}")
-            if option_id:
-                VariantAttributeBridge.objects.create(
-                    variant=variant, option_id=option_id
-                )
-
         primary_image = request.FILES.get("primary_image")
         if primary_image:
             ProductImage.objects.create(
@@ -379,21 +348,14 @@ def manage_variants(request, product_slug):
         edit_variant = get_object_or_404(
             ProductVariant, id=edit_variant_id, product=product
         )
-        selected_option_ids = list(
-            VariantAttributeBridge.objects.filter(variant=edit_variant).values_list(
-                "option_id", flat=True
-            )
-        )
 
     return render(
         request,
         "seller_templates/manage_variants.html",
         {
             "product": product,
-            "attributes": attributes,
             "variants": variants,
             "edit_variant": edit_variant,
-            "selected_option_ids": selected_option_ids,
         },
     )
 

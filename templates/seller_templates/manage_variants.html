@@ -124,32 +124,6 @@
 
                         <div class="space-y-4">
                             <h3 class="text-xs font-black text-muted uppercase tracking-widest border-b border-muted/20 pb-2 flex items-center gap-2">
-                                <span class="material-icons text-[16px] text-dark">tune</span> Attribute Options
-                            </h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {% for attribute in attributes %}
-                                <div>
-                                    <label class="block text-[10px] font-black uppercase tracking-widest text-muted mb-2">{{ attribute.name }}</label>
-                                    <div class="relative">
-                                        <select name="attribute_{{ attribute.id }}" class="w-full px-4 py-3 bg-light/30 border border-muted/50 rounded-xl text-sm font-bold text-dark focus:outline-none focus:ring-2 focus:ring-dark focus:border-transparent appearance-none transition-all cursor-pointer">
-                                            <option value="" disabled selected>-- Choose {{ attribute.name }} --</option>
-                                            {% for option in attribute.options.all %}
-                                                <option value="{{ option.id }}" {% if option.id in selected_option_ids %}selected{% endif %}>{{ option.value }}</option>
-                                            {% endfor %}
-                                        </select>
-                                        <span class="material-icons absolute right-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none">expand_more</span>
-                                    </div>
-                                </div>
-                                {% empty %}
-                                <div class="col-span-2 p-4 bg-yellow-50 border border-yellow-200 rounded-xl text-yellow-700 text-sm font-bold flex items-center gap-2">
-                                    <span class="material-icons text-[18px]">info</span> No attributes defined for this product's category.
-                                </div>
-                                {% endfor %}
-                            </div>
-                        </div>
-
-                        <div class="space-y-4">
-                            <h3 class="text-xs font-black text-muted uppercase tracking-widest border-b border-muted/20 pb-2 flex items-center gap-2">
                                 <span class="material-icons text-[16px] text-dark">collections</span> Media Files
                             </h3>
                             <div class="grid grid-cols-1 gap-4">
@@ -199,7 +173,6 @@
                              data-tax="{{ variant.tax_percentage }}"
                              data-weight="{{ variant.weight }}"
                              data-dims="{{ variant.length }} x {{ variant.width }} x {{ variant.height }}"
-                             data-attributes="{% for va in variant.attributes.all %}{{ va.option.attribute.name }}:{{ va.option.value }}{% if not forloop.last %}, {% endif %}{% endfor %}"
                              data-image="{% if variant.images.first %}{{ variant.images.first.image_url.url }}{% else %}{{ '' }}{% endif %}" >
                             
                             <div class="flex justify-between items-start mb-4">
@@ -244,20 +217,6 @@
                                 </span>
                             </div>
 
-                            <div class="bg-white border border-muted/20 p-3 rounded-xl">
-                                <span class="text-[9px] font-black uppercase tracking-widest text-muted block mb-2">Selected Attributes</span>
-                                <div class="flex flex-wrap gap-1.5">
-                                    {% if variant.attributes.exists %}
-                                        {% for va in variant.attributes.all %}
-                                            <span class="bg-dark text-light text-[10px] font-bold px-2 py-0.5 rounded-md">
-                                                <span class="opacity-60 font-medium mr-1">{{ va.option.attribute.name }}:</span>{{ va.option.value }}
-                                            </span>
-                                        {% endfor %}
-                                    {% else %}
-                                        <span class="text-xs text-muted font-bold italic">No attributes assigned</span>
-                                    {% endif %}
-                                </div>
-                            </div>
                             
                         </div>
                         {% empty %}
@@ -291,7 +250,6 @@
                 <p><span class="font-black">Tax:</span> <span id="variantDetailsTax"></span>%</p>
                 <p><span class="font-black">Weight:</span> <span id="variantDetailsWeight"></span> kg</p>
                 <p><span class="font-black">Dimensions (L×W×H):</span> <span id="variantDetailsDims"></span> cm</p>
-                <p><span class="font-black">Attributes:</span> <span id="variantDetailsAttrs"></span></p>
                 <p><span class="font-black">Image:</span> <a id="variantDetailsImage" href="#" class="text-accent underline" target="_blank">Open image</a></p>
             </div>
         </div>
@@ -311,7 +269,6 @@
                 document.getElementById('variantDetailsTax').textContent = card.dataset.tax || '0';
                 document.getElementById('variantDetailsWeight').textContent = card.dataset.weight || '0';
                 document.getElementById('variantDetailsDims').textContent = card.dataset.dims || 'N/A';
-                document.getElementById('variantDetailsAttrs').textContent = card.dataset.attributes || 'None';
                 var imageUrl = card.dataset.image || '#';
                 var imageLink = document.getElementById('variantDetailsImage');
                 imageLink.href = imageUrl;

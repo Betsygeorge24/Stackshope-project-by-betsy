@@ -622,7 +622,7 @@ def product_single_view(request, product_slug=None, product_id=None):
         Product.objects.select_related(
             "subcategory__category", "seller"
         ).prefetch_related(
-            "variants__images", "variants__attributes__option__attribute"
+            "variants__images"
         ),
         approval_status="approved",
         is_active=True,
@@ -644,10 +644,7 @@ def product_single_view(request, product_slug=None, product_id=None):
         return redirect("product_list")
 
     for v in variants:
-        option_descs = []
-        for brid in v.attributes.select_related("option__attribute").all():
-            option_descs.append(f"{brid.option.attribute.name}: {brid.option.value}")
-        v.variant_label = ", ".join(sorted(option_descs)) if option_descs else "Default"
+        v.variant_label = "Default"
 
     reviews = (
         Review.objects.filter(product=product)

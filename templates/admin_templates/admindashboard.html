@@ -334,78 +334,6 @@
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-                    <!-- Product Attributes Card -->
-                    <div class="bg-white rounded-2xl border border-muted/30 shadow-sm p-6">
-                        <div class="flex items-center gap-2 mb-6 border-b border-muted/20 pb-4">
-                            <span class="material-icons text-accent">category</span>
-                            <h3 class="font-extrabold text-dark text-lg">Product Attributes</h3>
-                        </div>
-                        <form id="attribute-form" class="space-y-4" action="{% url 'save_attribute' %}" method="post">
-                            {% csrf_token %}
-                            <div>
-                                <label class="block text-[10px] font-black text-dark uppercase tracking-widest mb-2">
-                                    Attribute Name
-                                </label>
-                                <input type="text" id="id_name" name="name" placeholder="e.g., Color, Size, Material" 
-                                    class="w-full px-4 py-2.5 border border-muted/50 rounded-xl text-sm focus:outline-none focus:border-dark"
-                                    required>
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-black text-dark uppercase tracking-widest mb-2">
-                                    Subcategory (Optional)
-                                </label>
-                                <select id="id_subcategory" name="subcategory" 
-                                    class="w-full px-4 py-2.5 border border-muted/50 rounded-xl text-sm focus:outline-none focus:border-dark bg-white">
-                                    <option value="">-- Select Subcategory --</option>
-                                    {% for subcat in subcategories %}
-                                    <option value="{{ subcat.id }}">{{ subcat.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <button type="submit" 
-                                class="w-full bg-dark text-light py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-accent hover:text-dark transition-colors">
-                                Save Attribute
-                            </button>
-                        </form>
-                        <div id="attribute-message" class="mt-4 hidden p-3 rounded-lg text-sm font-medium"></div>
-                    </div>
-
-                    <!-- Attribute Options Card -->
-                    <div class="bg-white rounded-2xl border border-muted/30 shadow-sm p-6">
-                        <div class="flex items-center gap-2 mb-6 border-b border-muted/20 pb-4">
-                            <span class="material-icons text-accent">list_alt</span>
-                            <h3 class="font-extrabold text-dark text-lg">Attribute Options</h3>
-                        </div>
-                        <form id="attribute-option-form" class="space-y-4" action="{% url 'save_attribute_option' %}" method="post">
-                            {% csrf_token %}
-                            <div>
-                                <label class="block text-[10px] font-black text-dark uppercase tracking-widest mb-2">
-                                    Select Attribute
-                                </label>
-                                <select id="id_attribute" name="attribute" 
-                                    class="w-full px-4 py-2.5 border border-muted/50 rounded-xl text-sm focus:outline-none focus:border-dark bg-white"
-                                    required>
-                                    <option value="">-- Select Attribute --</option>
-                                    {% for attr in attributes %}
-                                    <option value="{{ attr.id }}">{{ attr.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-black text-dark uppercase tracking-widest mb-2">
-                                    Option Value
-                                </label>
-                                <input type="text" id="id_option_value" name="value" placeholder="e.g., Red, XL, Cotton"
-                                    class="w-full px-4 py-2.5 border border-muted/50 rounded-xl text-sm focus:outline-none focus:border-dark"
-                                    required>
-                            </div>
-                            <button type="submit"
-                                class="w-full bg-dark text-light py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-accent hover:text-dark transition-colors">
-                                Add Option
-                            </button>
-                        </form>
-                        <div id="option-message" class="mt-4 hidden p-3 rounded-lg text-sm font-medium"></div>
-                    </div>
 
                 </div>
 
@@ -480,7 +408,6 @@
                     </div>
                 </div>
 
-                <!-- Ads/Banners and Variant Attribute Bridge -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
 
                     <div class="bg-white rounded-2xl border border-muted/30 shadow-sm p-6">
@@ -517,37 +444,6 @@
                                 <label for="id_banner_active" class="text-xs font-medium text-dark">Active</label>
                             </div>
                             <button type="submit" class="w-full bg-dark text-light py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-accent hover:text-dark transition-colors">Save Banner</button>
-                        </form>
-                    </div>
-
-                    <div class="bg-white rounded-2xl border border-muted/30 shadow-sm p-6">
-                        <div class="flex items-center gap-2 mb-6 border-b border-muted/20 pb-4">
-                            <span class="material-icons text-accent">settings_input_hdmi</span>
-                            <h3 class="font-extrabold text-dark text-lg">Create Variant Attribute Bridge</h3>
-                        </div>
-                        <form action="{% url 'save_variant_attribute_bridge' %}" method="post" class="space-y-4">
-                            {% csrf_token %}
-                            <div>
-                                <label class="block text-[10px] font-black text-dark uppercase tracking-widest mb-2">Variant</label>
-                                <select name="variant" class="w-full px-4 py-2.5 border border-muted/50 rounded-xl text-sm focus:outline-none focus:border-dark bg-white" required>
-                                    <option value="">-- Select Variant --</option>
-                                    {% for variant in products %}
-                                    <option value="{{ variant.id }}">{{ variant.sku_code }} / {{ variant.product.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-black text-dark uppercase tracking-widest mb-2">Attribute Option</label>
-                                <select name="option" class="w-full px-4 py-2.5 border border-muted/50 rounded-xl text-sm focus:outline-none focus:border-dark bg-white" required>
-                                    <option value="">-- Select Option --</option>
-                                    {% for attr in attributes %}
-                                        {% for opt in attr.options.all %}
-                                            <option value="{{ opt.id }}">{{ attr.name }}: {{ opt.value }}</option>
-                                        {% endfor %}
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <button type="submit" class="w-full bg-dark text-light py-3 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-accent hover:text-dark transition-colors">Save Bridge</button>
                         </form>
                     </div>
 
