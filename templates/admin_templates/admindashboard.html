@@ -78,6 +78,10 @@
                 class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium hover:bg-accent/10 transition-all text-muted">
                 <span class="material-icons text-[20px]">campaign</span> Setup & Marketing
             </button>
+            <button onclick="window.location.href='{% url 'manage_deals' %}'" id="tab-deals"
+                class="tab-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium hover:bg-accent/10 transition-all text-muted">
+                <span class="material-icons text-[20px]">local_offer</span> Manage Deals
+            </button>
         </nav>
 
         <div class="p-4 border-t border-muted/20">
@@ -93,6 +97,7 @@
         <header class="bg-white px-8 py-4 border-b border-muted/20 flex justify-between items-center sticky top-0 z-10">
             <h2 id="page-title" class="text-xl font-black text-dark tracking-wide">Seller Management</h2>
             <div class="flex items-center gap-4">
+                <a href="{% url 'add_deal' %}" class="bg-accent text-dark px-4 py-2 rounded-lg text-xs font-bold hover:bg-accent/90 transition">Add Deal</a>
                 <span class="material-icons text-muted cursor-pointer hover:text-dark">notifications</span>
                 <div
                     class="w-10 h-10 rounded-full bg-accent text-dark font-black flex items-center justify-center uppercase shadow-sm">
@@ -450,6 +455,48 @@
                 </div>
             </section>
 
+            <section id="content-deals" class="page-content hidden">
+                <div class="bg-white rounded-2xl border border-muted/30 shadow-sm p-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="font-extrabold text-dark text-xl">Deal Management</h3>
+                        <a href="{% url 'manage_deals' %}" class="bg-accent text-dark px-6 py-3 rounded-lg text-sm font-bold hover:bg-accent/90 transition">
+                            <span class="material-icons text-sm mr-2">manage_search</span>
+                            Manage All Deals
+                        </a>
+                    </div>
+                    <p class="text-muted text-sm mb-6">Create and manage promotional deals for your store. Deals help boost sales by offering discounts on selected products.</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-light/50 rounded-xl p-6 text-center">
+                            <span class="material-icons text-4xl text-accent mb-4">local_offer</span>
+                            <h4 class="font-bold text-dark mb-2">Create Deals</h4>
+                            <p class="text-sm text-muted mb-4">Set up promotional offers with custom discounts and time limits.</p>
+                            <a href="{% url 'add_deal' %}" class="inline-block bg-dark text-light px-4 py-2 rounded-lg text-xs font-bold hover:bg-accent hover:text-dark transition">
+                                Create New Deal
+                            </a>
+                        </div>
+
+                        <div class="bg-light/50 rounded-xl p-6 text-center">
+                            <span class="material-icons text-4xl text-accent mb-4">analytics</span>
+                            <h4 class="font-bold text-dark mb-2">Track Performance</h4>
+                            <p class="text-sm text-muted mb-4">Monitor deal effectiveness and customer engagement.</p>
+                            <button class="inline-block bg-gray-200 text-gray-600 px-4 py-2 rounded-lg text-xs font-bold cursor-not-allowed" disabled>
+                                Coming Soon
+                            </button>
+                        </div>
+
+                        <div class="bg-light/50 rounded-xl p-6 text-center">
+                            <span class="material-icons text-4xl text-accent mb-4">settings</span>
+                            <h4 class="font-bold text-dark mb-2">Deal Settings</h4>
+                            <p class="text-sm text-muted mb-4">Configure global deal preferences and restrictions.</p>
+                            <button class="inline-block bg-gray-200 text-gray-600 px-4 py-2 rounded-lg text-xs font-bold cursor-not-allowed" disabled>
+                                Coming Soon
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
         </div>
     </main>
 
@@ -475,7 +522,8 @@
             const titles = {
                 'sellers': 'Seller Management',
                 'products': 'Product Verification',
-                'marketing': 'Setup & Marketing'
+                'marketing': 'Setup & Marketing',
+                'deals': 'Deal Management'
             };
             document.getElementById('page-title').innerText = titles[tabId];
         }

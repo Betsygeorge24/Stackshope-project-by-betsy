@@ -47,3 +47,28 @@ class PlatformCommission(models.Model):
     commission_amount = models.DecimalField(max_digits=10, decimal_places=2)
     settlement_status = models.CharField(max_length=20)
     settled_at = models.DateTimeField(null=True, blank=True)
+
+class Deal(models.Model):
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    banner_image = models.ImageField(upload_to='deal_images/', blank=True, null=True, help_text="Banner image for the deal section")
+    products = models.ManyToManyField("seller.Product", related_name="deals")
+    discount_percentage = models.DecimalField(max_digits=5, decimal_places=2, help_text="Discount percentage (e.g., 20 for 20%)")
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Deal"
+        verbose_name_plural = "Deals"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.title
+
+    @property
+    def is_currently_active(self):
+        from django.utils import timezone
+        now = timezone.now()
+        return self.is_active and self.start_date <= now <= self.end_date

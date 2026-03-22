@@ -10,7 +10,9 @@ from .forms import (
     CategoryForm,
     SubCategoryForm,
     BannerForm,
+    DealForm,
 )
+from .models import Deal
 
 
 @admin_required
@@ -30,6 +32,48 @@ def admin_dashboard_view(request):
         "banner_form": BannerForm(),
     }
     return render(request, "admin_templates/admindashboard.html", context)
+
+
+@admin_required
+def add_deal(request):
+    if request.method == 'POST':
+        form = DealForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Deal created successfully!')
+            return redirect('admin_dashboard')
+        else:
+            messages.error(request, 'Error creating deal. Please fix the errors below.')
+    else:
+        form = DealForm()
+
+    context = {
+        'deal_form': form,
+    }
+    return render(request, 'admin_templates/add_deals.html', context)
+
+
+@admin_required
+def manage_deals(request):
+    deals = Deal.objects.all().order_by('-created_at')
+    context = {
+        'deals': deals,
+    }
+    return render(request, 'admin_templates/manage_deals.html', context)
+
+
+@admin_required
+def delete_deal(request):
+    if request.method == 'POST':
+        deal_id = request.POST.get('deal_id')
+        if deal_id:
+            deal = get_object_or_404(Deal, id=deal_id)
+            deal_title = deal.title
+            deal.delete()
+            messages.success(request, f'Deal "{deal_title}" has been deleted successfully!')
+        else:
+            messages.error(request, 'Invalid deal ID.')
+    return redirect('manage_deals')
 
 
 @admin_required

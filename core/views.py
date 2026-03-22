@@ -500,6 +500,10 @@ def category_view(request):
 
 
 def deals_view(request):
+    from admin_app.models import Deal
+    from seller.models import Product, ProductVariant, ProductImage
+    from decimal import Decimal
+    
     if request.user.is_authenticated:
         cart = Cart.objects.filter(user=request.user).first()
         cart_items = CartItem.objects.filter(cart=cart).prefetch_related(
@@ -507,7 +511,32 @@ def deals_view(request):
         )
     else:
         cart_items = []
-    return render(request, "core_templates/dealspage.html", {"cart_items": cart_items})
+    
+    # Get active deals with their products
+    deals = Deal.objects.filter(is_active=True).prefetch_related(
+        'products__variants__images', 'products__seller'
+    ).order_by('-created_at')
+    
+    # Filter deals that are currently active based on dates
+    current_deals = []
+    for deal in deals:
+        if deal.is_currently_active:
+            # Calculate discounted prices for products
+            for product in deal.products.all():
+                if product.is_active and product.approval_status == 'approved':
+                    original_price = product.min_variant_price
+                    if original_price:
+                        original_price_decimal = Decimal(str(original_price))
+                        discount_amount = (original_price_decimal * deal.discount_percentage) / Decimal('100')
+                        product.discounted_price = original_price_decimal - discount_amount
+                    else:
+                        product.discounted_price = None
+            current_deals.append(deal)
+    
+    return render(request, "core_templates/dealspage.html", {
+        "cart_items": cart_items,
+        "deals": current_deals
+    })
 
 
 # Create your views here.
