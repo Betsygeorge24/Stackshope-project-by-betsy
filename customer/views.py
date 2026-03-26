@@ -237,6 +237,9 @@ def buy_now_view(request, variant_id):
     """Adds product to cart and redirects directly to checkout"""
     user = request.user
     product_variant = get_object_or_404(ProductVariant, id=variant_id)
+    if product_variant.product.seller.user == user:
+        messages.error(request, "You cannot add your own product to the cart.")
+        return redirect(request.META.get("HTTP_REFERER", "product_list"))
     cart, _ = Cart.objects.get_or_create(user=user)
 
     try:
