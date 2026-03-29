@@ -182,10 +182,10 @@
             </div>
             {% endif %}
 
-            <div class="grid grid-cols-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-6 lg:gap-8">
+            <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 lg:gap-6">
                 {% for x in products %}
 
-                <div class="group bg-slate-100 rounded-2xl overflow-hidden shadow-md hover:shadow-xl border border-slate-300 hover:border-dark/30 transition-all duration-300 flex flex-col relative">
+                <div class="group product-card bg-slate-100 rounded-2xl overflow-hidden shadow-md hover:shadow-xl border border-slate-300 hover:border-dark/30 transition-all duration-300 flex flex-col relative cursor-pointer" data-product-url="{% url 'productsingle' x.slug %}">
 
                     <div class="aspect-[4/3] bg-slate-50 relative overflow-hidden border-b border-slate-200 flex items-center justify-center group-hover:bg-slate-100 transition-colors">
                         <div class="relative w-full h-full">
@@ -230,16 +230,10 @@
                             </span>
                         </div>
                         
-                        <div class="flex items-start justify-between gap-3 mb-2">
-                            <h3 class="font-extrabold text-dark text-lg leading-tight line-clamp-2 group-hover: transition-colors flex-1" title="{{ x.name }}">
+                        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-2">
+                            <h3 class="font-extrabold text-dark text-lg leading-tight line-clamp-2 group-hover:text-accent transition-colors flex-1 min-w-0" title="{{ x.name }}">
                                 <a href="{% url 'productsingle' x.slug %}">{{ x.name }}</a>
                             </h3>
-
-                            <a href="{% url 'productsingle' x.slug %}"
-                                class="flex-shrink-0 flex items-center gap-1 text-[10px] uppercase tracking-widest font-bold bg-white text-dark px-2.5 py-1.5 rounded-lg border border-muted/30 hover:bg-dark hover:text-white hover:border-dark transition-all mt-0.5 shadow-sm">
-                                <span>View</span>
-                                <span class="material-icons text-[14px]">arrow_forward</span>
-                            </a>
                         </div>
 
                         <div class="mt-auto pt-4 border-t border-slate-200">
@@ -271,7 +265,7 @@
 
             <div class="mt-12 flex justify-center">
                 {% if page_obj.has_other_pages %}
-                <nav class="flex items-center gap-2">
+                <nav class="flex flex-wrap justify-center items-center gap-2">
                     {% if page_obj.has_previous %}
                     <a href="?page=1{% if search_query %}&q={{ search_query }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% for cat in selected_categories %}&category={{ cat }}{% endfor %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}"
                         class="w-10 h-10 flex items-center justify-center rounded-xl border border-muted/30 text-muted hover:text-dark hover:border-dark hover:bg-white transition-all shadow-sm bg-white"
@@ -396,8 +390,22 @@
             });
 
             // Click to manually cycle through images
-            productCard.querySelector('.relative.w-full').addEventListener('click', () => {
-                nextImage();
+            const imageWrapper = productCard.querySelector('.relative.w-full');
+            if (imageWrapper) {
+                imageWrapper.addEventListener('click', () => {
+                    nextImage();
+                });
+            }
+        });
+
+        // Click anywhere on a card to go to the product page
+        document.querySelectorAll('.product-card').forEach(card => {
+            card.addEventListener('click', (event) => {
+                if (event.target.closest('a, button, form, input, label, select, textarea')) return;
+                const url = card.dataset.productUrl;
+                if (url) {
+                    window.location.href = url;
+                }
             });
         });
 
