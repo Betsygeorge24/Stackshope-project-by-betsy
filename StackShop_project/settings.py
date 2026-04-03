@@ -28,7 +28,9 @@ load_dotenv(BASE_DIR / ".env")
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'False').lower() in ('1', 'true', 'yes')
+
+# ALLOWED_HOSTS = ["*"]
 
 ALLOWED_HOSTS = [
     '127.0.0.1',
@@ -49,7 +51,54 @@ INSTALLED_APPS = [
     'admin_app',
     'seller',
     'customer',
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
 ]
+#google authentication
+ENVIRONMENT = os.getenv('ENVIRONMENT', 'local')
+DOMAIN = os.getenv('DOMAIN')
+
+if ENVIRONMENT == 'production':
+    SITE_ID = 2
+else:
+    SITE_ID = 3
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_USERNAME_REQUIRED = False
+SOCIALACCOUNT_LOGIN_ON_GET = True
+SOCIALACCOUNT_AUTO_SIGNUP = True
+
+if ENVIRONMENT == 'production':
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': ['profile', 'email', 'https://www.googleapis.com/auth/userinfo.profile'],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        }
+    }
+}
+# -------------------- Hosts --------------------
+if ENVIRONMENT == 'production':
+    ALLOWED_HOSTS = [DOMAIN]
+    CSRF_TRUSTED_ORIGINS = [f'https://{DOMAIN}']
+    ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'
+else:
+    ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+    CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000']
+    ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http'
+#------------------------------Custom User Model--------------------------------------
 
 AUTH_USER_MODEL = 'core.CustomUser'
 LOGIN_URL = 'login'
@@ -62,6 +111,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'StackShop_project.urls'
