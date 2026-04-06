@@ -46,27 +46,27 @@ def home_view(request):
     category_items = Category.objects.all()
     current_time = timezone.now()
 
-#     banners = (
-#     Banner.objects.filter(
-#         is_active=True,
-#         start_date__lte=current_time,
-#         end_date__gte=current_time,
-#     )
-#     .order_by("-created_at")[:5]
-# )
+    banners = (
+    Banner.objects.filter(
+        is_active=True,
+        start_date__lte=current_time,
+        end_date__gte=current_time,
+    )
+    .order_by("-created_at")[:5]
+)
 
-#     product_var = (
-#     ProductVariant.objects.select_related("product__subcategory__category")
-#     .prefetch_related("images")
-#     .filter(product__approval_status="approved")[:12]
-# )
+    product_var = (
+    ProductVariant.objects.select_related("product__subcategory__category")
+    .prefetch_related("images")
+    .filter(product__approval_status="approved")[:12]
+)
 
-    # top_picks = (
-    #     Product.objects.filter(approval_status="approved", is_active=True)
-    #     .select_related("subcategory__category")
-    #     .prefetch_related("variants__images")
-    #     .order_by("-review_count", "-created_at")[:12]
-    # )
+    top_picks = (
+        Product.objects.filter(approval_status="approved", is_active=True)
+        .select_related("subcategory__category")
+        .prefetch_related("variants__images")
+        .order_by("-review_count", "-created_at")[:12]
+    )
     if user.is_authenticated and user.is_admin:
         return redirect(request.META.get("HTTP_REFERER", "admin_dashboard"))
     # if user.is_authenticated and user.role=="SELLER":
@@ -82,8 +82,8 @@ def home_view(request):
     "variant__product__subcategory"
 ).prefetch_related("variant__images")
 
-        # for product in top_picks:
-        #     product.is_in_wishlist = product.id in wishlist_product_ids
+        for product in top_picks:
+            product.is_in_wishlist = product.id in wishlist_product_ids
 
         return render(
             request,
@@ -92,9 +92,9 @@ def home_view(request):
                 "user": user,
                 "cart_items": cart_items,
                 "categories": category_items,
-                # "product_var": product_var,
-                # "top_picks": top_picks,
-                # "banners": banners,
+                "product_var": product_var,
+                "top_picks": top_picks,
+                "banners": banners,
             },
         )
     return render(
@@ -108,15 +108,6 @@ def home_view(request):
         },
     )
 
-# def home_view(request):
-#     user = request.user
-#     category_items = Category.objects.all()
-#     current_time = timezone.now()
-
-#     # TEMPORARY TEST (remove heavy queries)
-#     product_var = []
-#     top_picks = []
-#     banners = []
 # search-------------------------------------------------------------------------
 def search_and_filter_view(request):
     query = request.GET.get("q", "")
