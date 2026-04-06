@@ -1,0 +1,140 @@
+<aside class="hidden md:flex md:w-64 bg-dark text-light flex-col h-screen p-4 gap-6">
+    <!-- Logo -->
+    <a href="{% url 'dashboard' %}" class="flex items-center gap-3 mb-6">
+        <svg class="w-8 h-8 text-accent" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+        <div>
+            <div class="text-xl font-bold">StackShop</div>
+            <div class="text-[10px] text-accent font-bold uppercase tracking-widest">Seller Central</div>
+        </div>
+    </a>
+
+    <!-- Navigation -->
+    <nav class="flex flex-col gap-2 text-sm font-semibold">
+
+        <a href="{% url 'customer_reviews' %}" 
+           class="flex items-center gap-3 px-4 py-2 rounded-lg transition
+           {% if request.resolver_match.url_name == 'customer_reviews' %}
+                bg-accent text-dark
+           {% else %}
+                text-muted hover:bg-accent hover:text-dark
+           {% endif %}">
+            <span class="material-icons text-[18px]">reviews</span>
+            Reviews
+        </a>
+
+        <a href="{% url 'dashboard' %}" 
+           class="flex items-center gap-3 px-4 py-2 rounded-lg transition
+           {% if request.resolver_match.url_name == 'dashboard' %}
+                bg-accent text-dark
+           {% else %}
+                text-muted hover:bg-accent hover:text-dark
+           {% endif %}">
+            <span class="material-icons text-[18px]">inventory_2</span>
+            My Products
+        </a>
+
+        <a href="{% url 'seller_inventory' %}" 
+           class="flex items-center gap-3 px-4 py-2 rounded-lg transition
+           {% if request.resolver_match.url_name == 'seller_inventory' %}
+                bg-accent text-dark
+           {% else %}
+                text-muted hover:bg-accent hover:text-dark
+           {% endif %}">
+            <span class="material-icons text-[18px]">warehouse</span>
+            Inventory
+        </a>
+
+        <a href="{% url 'seller_customers_orders' %}" 
+           class="flex items-center justify-between px-4 py-2 rounded-lg transition
+           {% if request.resolver_match.url_name == 'seller_customers_orders' %}
+                bg-accent text-dark
+           {% else %}
+                text-muted hover:bg-accent hover:text-dark
+           {% endif %}">
+            <div class="flex items-center gap-3">
+                <span class="material-icons text-[18px]">shopping_bag</span>
+                Orders
+            </div>
+            <span class="bg-accent text-dark text-xs px-2 py-0.5 rounded-full">
+                {{ seller_total_orders|default:0 }}
+            </span>
+        </a>
+
+        <a href="{% url 'seller_analytics' %}" 
+           class="flex items-center gap-3 px-4 py-2 rounded-lg transition
+           {% if request.resolver_match.url_name == 'seller_analytics' %}
+                bg-accent text-dark
+           {% else %}
+                text-muted hover:bg-accent hover:text-dark
+           {% endif %}">
+            <span class="material-icons text-[18px]">bar_chart</span>
+            Analytics
+        </a>
+
+    </nav>
+
+    <!-- Profile Section -->
+    <div class="mt-auto border-t border-muted/30 pt-4">
+
+        
+        <!-- Profile Links -->
+        <div class="flex flex-col gap-2 text-sm">
+
+            <a href="{% url 'home' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-light hover:text-dark transition">
+                <span class="material-icons text-[16px]">storefront</span>
+                Store
+            </a>
+
+            <a href="{% url 'seller-profile' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-light hover:text-dark transition">
+                <span class="material-icons text-[16px]">person</span>
+                Profile
+            </a>
+
+            <a href="{% url 'seller_settings' %}" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-light hover:text-dark transition">
+                <span class="material-icons text-[16px]">update</span>
+                Update Password
+            </a>
+
+            <form action="{% url 'logout' %}" method="POST">
+                {% csrf_token %}
+                <button class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-red-500 hover:bg-red-50 transition">
+                    <span class="material-icons text-[16px]">logout</span>
+                    Logout
+                </button>
+            </form>
+
+        </div>
+
+    </div>
+
+</aside>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const btn = document.getElementById('seller-mobile-menu-btn');
+        const menu = document.getElementById('seller-mobile-menu');
+        if (btn && menu) {
+            const icon = btn.querySelector('.material-icons');
+
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                menu.classList.toggle('hidden');
+                if (menu.classList.contains('hidden')) {
+                    icon.textContent = 'menu';
+                } else {
+                    icon.textContent = 'close';
+                }
+            });
+
+            // Close menu when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!menu.contains(e.target) && !btn.contains(e.target) && !menu.classList.contains('hidden')) {
+                    menu.classList.add('hidden');
+                    icon.textContent = 'menu';
+                }
+            });
+        }
+    });
+</script>

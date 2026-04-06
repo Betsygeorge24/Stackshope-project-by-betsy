@@ -93,7 +93,7 @@
                                         <p class="text-xs text-muted uppercase tracking-widest font-bold">Signed in as</p>
                                         <p class="text-sm font-extrabold truncate"><a href="{% url 'profile' %}" class="text-sm font-extrabold truncate hover:text-accent">{{ user.username|default:"guest" }}</a></p>
                                     </div>
-                                    <a href="{% url 'profile' %}" class="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-accent/50 transition-colors text-sm font-bold"><span class="material-icons text-[18px] text-muted">badge</span> My Profile</a>
+                                    <a href="{% url 'seller-profile' %}" class="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-accent/50 transition-colors text-sm font-bold"><span class="material-icons text-[18px] text-muted">badge</span> My Profile</a>
                                     <a href="{% url 'order-history' %}" class="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-accent/50 transition-colors text-sm font-bold"><span class="material-icons text-[18px] text-muted">inventory_2</span> Orders</a>
                                     <a href="{% url 'wishlist' %}" class="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-accent/50 transition-colors text-sm font-bold"><span class="material-icons text-[18px] text-muted">favorite_border</span> Wishlist</a>
                                     <a href="{% url 'address' %}" class="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-accent/50 transition-colors text-sm font-bold"><span class="material-icons text-[18px] text-muted">location_on</span> Saved Address</a>

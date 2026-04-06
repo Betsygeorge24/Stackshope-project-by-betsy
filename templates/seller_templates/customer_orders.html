@@ -32,13 +32,17 @@
     </style>
 </head>
 
-<body class="bg-light text-dark font-display flex flex-col min-h-screen overflow-x-hidden">
-    
-    {% include "seller_templates/seller_navbar.html" %}
 
-    <main class="max-w-7xl mx-auto w-full px-4 mt-8 mb-20 flex-grow">
-        {% include "core_templates/messages.html" %}
 
+<body class="flex min-h-screen bg-light text-dark font-display">
+          <aside class="w-64 bg-dark text-light min-h-screen flex flex-col">
+    {% include "seller_templates/sellersidebar.html" %}
+</aside>
+<div class="flex flex-col flex-1 min-h-screen">
+   
+                     {% include "core_templates/messages.html" %}
+ <div class="flex-1 px-4">
+        <main class="flex-1 max-w-7xl mx-auto w-full px-4 mt-8 pb-12">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 border-b border-muted/30 pb-6 gap-4">
             <div>
                 <h1 class="text-3xl lg:text-4xl font-extrabold text-dark tracking-tight mb-2">Order Management</h1>
@@ -237,7 +241,7 @@
                                                     <p class="text-sm text-muted font-medium mb-3">Product Variant</p>
                                                     <div class="flex gap-2 flex-wrap">
                                                         <div class="bg-dark text-light px-3 py-1 rounded-lg text-xs font-bold">Qty: {{ order.quantity }}</div>
-                                                        <div class="bg-accent text-dark px-3 py-1 rounded-lg text-xs font-bold">₹{{ order.price_at_purchase }}</div>
+                                                        <div class="bg-accent text-dark px-3 py-1 rounded-lg text-xs font-bold">₹{{ order.total_price }}₹{{ order.price_at_purchase }} × {{ order.quantity }} = ₹{{ order.total_price }}</div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -342,7 +346,7 @@
                                             </div>
                                             <div class="flex justify-between items-center py-3 bg-light/50 px-4 rounded-xl">
                                                 <span class="text-base font-bold text-dark">Total Amount</span>
-                                                <span class="text-lg font-extrabold text-dark">₹{{ order.price_at_purchase }}</span>
+                                                <span class="text-lg font-extrabold text-dark">₹{{ order.total_price }}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -426,12 +430,14 @@
     </div>
 
 </div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8"></div>
         
     </main>
 
-    <footer class="bg-dark text-light py-3 text-center text-xs uppercase tracking-wide">
-        © {% now "Y" %} StackShop. All rights reserved.
+<footer class="bg-dark text-light py-4 text-center text-xs uppercase tracking-wide mt-auto">
+            © {% now "Y" %} StackShop. All rights reserved.
     </footer>
+    </div>
 
     <script>
         function openOrderDetails(modalId) {

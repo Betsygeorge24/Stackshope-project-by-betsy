@@ -9,6 +9,9 @@ from django.db.models import Count, Avg, Max, Sum, Q
 from customer.models import Order, OrderItem, Review
 from django.contrib import messages
 import random
+from django.db.models.functions import ExtractMonth
+
+
 @login_required
 @seller_required
 def seller_profile_view(request):
@@ -38,7 +41,9 @@ def seller_profile_view(request):
 @verified_seller_required
 def dashboard_view(request):
     seller = request.user.seller_profile
-    products = Product.objects.filter(seller=seller).order_by("-id")
+    products = Product.objects.filter(seller=seller).prefetch_related(
+    "variants__images"
+).order_by("-id")
 
     total_products = products.count()
 
@@ -48,9 +53,15 @@ def dashboard_view(request):
         .count()
     )
 
-    needs_shipping = OrderItem.objects.filter(
-        seller=seller, status__in=["pending", "processing"]
-    ).count()
+    needs_shipping = (
+    OrderItem.objects.filter(
+        seller=seller,
+        status="processing"
+    )
+    .values("order_id")
+    .distinct()
+    .count()
+)
 
     total_reviews = Review.objects.filter(product__seller=seller).count()
     avg_rating = (
@@ -65,7 +76,7 @@ def dashboard_view(request):
         OrderItem.objects.filter(seller=seller).values("order_id").distinct().count()
     )
     pending_actions = (
-        OrderItem.objects.filter(seller=seller, status__in=["pending", "processing"])
+        OrderItem.objects.filter(seller=seller, status=["pending"])
         .values("order_id")
         .distinct()
         .count()
@@ -663,6 +674,7 @@ def customer_reviews(request):
         },
     )
 
+from django.core.paginator import Paginator
 
 @verified_seller_required
 def seller_customers_orders(request):
@@ -670,18 +682,14 @@ def seller_customers_orders(request):
     query = request.GET.get("q", "").strip()
     status = request.GET.get("status", "all").lower()
 
-    orders = (
-        OrderItem.objects.filter(seller=seller)
-        .select_related("order__user", "variant", "variant__product")
-        .prefetch_related("variant__images")
-        .order_by("-order__ordered_at")
-    )
+    # ✅ STEP 1: Filter FIRST (important)
+    base_queryset = OrderItem.objects.filter(seller=seller)
 
-    if status and status != "all":
-        orders = orders.filter(order__order_status__iexact=status)
+    if status != "all":
+        base_queryset = base_queryset.filter(order__order_status__iexact=status)
 
     if query:
-        orders = orders.filter(
+        base_queryset = base_queryset.filter(
             Q(order__order_number__icontains=query)
             | Q(order__user__first_name__icontains=query)
             | Q(order__user__last_name__icontains=query)
@@ -689,22 +697,32 @@ def seller_customers_orders(request):
             | Q(variant__product__name__icontains=query)
         )
 
-    from django.core.paginator import Paginator
+    # ✅ STEP 2: Only fetch needed data (OPTIMIZED)
+    base_queryset = base_queryset.select_related(
+        "order__user",
+        "variant",
+        "variant__product"
+    ).order_by("-order__ordered_at")
 
-    paginator = Paginator(orders, settings.PAGINATE_BY)
+    # ❌ REMOVE heavy image prefetch (this was killing performance)
+    # .prefetch_related("variant__images")
+
+    # ✅ STEP 3: Pagination EARLY
+    paginator = Paginator(base_queryset, 10)  # force limit 10
     page_number = request.GET.get("page")
     orders_page = paginator.get_page(page_number)
 
-    context = {
+    # ✅ STEP 4: lightweight calculation
+    for item in orders_page:
+        item.total_price = item.price_at_purchase * item.quantity
+
+    return render(request, "seller_templates/customer_orders.html", {
         "orders": orders_page,
         "page_obj": orders_page,
         "paginator": paginator,
-        "request": request,
         "current_status": status,
         "query": query,
-    }
-    return render(request, "seller_templates/customer_orders.html", context)
-
+    })
 
 @verified_seller_required
 def update_order_status(request):
@@ -725,17 +743,82 @@ def update_order_status(request):
 
     return redirect("seller_customers_orders")
 
+@verified_seller_required
 def seller_analytics(request):
-   seller = request.user.seller_profile
+    seller = request.user.seller_profile
 
-   logs = InventoryLog.objects.filter(
+    products = Product.objects.filter(seller=seller)
+    total_products = products.count()
+
+    # Category Distribution
+    raw_categories = (
+        products.values("subcategory__name")
+        .annotate(count=Count("id"))
+    )
+
+    category_data = []
+    for cat in raw_categories:
+        percentage = (cat["count"] / total_products * 100) if total_products else 0
+        category_data.append({
+            "name": cat["subcategory__name"],
+            "percent": round(percentage, 1)
+        })
+
+    # Monthly Sales
+    order_items = OrderItem.objects.filter(seller=seller)
+
+    monthly_sales = (
+    order_items.filter(status__in=["processing", "shipped", "delivered"])
+    .annotate(month=ExtractMonth("order__ordered_at"))
+    .values("month")
+    .annotate(total=Sum("price_at_purchase"))
+    .order_by("month")
+)
+
+    sales_data = [0] * 12
+    for item in monthly_sales:
+        sales_data[item["month"] - 1] = float(item["total"] or 0)
+
+    # ✅ Months
+    months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+
+    # ✅ Y-axis labels (auto scale)
+    max_val = max(sales_data) if sales_data else 0
+    step = max_val // 4 if max_val else 10000
+    y_labels = [step * i for i in range(5)][::-1]
+
+    # ✅ SVG path generator
+    def generate_path(data):
+        if not data:
+            return ""
+
+        max_val = max(data) or 1
+        points = []
+
+        for i, val in enumerate(data):
+            x = i * (400 / (len(data) - 1))
+            y = 100 - (val / max_val * 100)
+            points.append(f"{x},{y}")
+
+        path = "M " + " L ".join(points)
+        return path
+
+    path_d = generate_path(sales_data)
+
+    logs = InventoryLog.objects.filter(
         variant__product__seller=seller
     ).select_related(
         "variant", "variant__product", "performed_by"
     )[:15]
 
-   return render(request, 'seller_templates/selleranalytics.html', {
-        "logs": logs
+    return render(request, 'seller_templates/selleranalytics.html', {
+        "category_data": category_data,
+        "sales_data": sales_data,
+        "logs": logs,
+        "total_products": total_products,
+        "months": months,
+        "y_labels": y_labels,
+        "path_d": path_d,
     })
 @verified_seller_required
 def delete_product_image(request, image_id):

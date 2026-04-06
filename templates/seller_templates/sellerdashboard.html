@@ -41,13 +41,44 @@
         .marquee-item { display: inline-flex; align-items: center; gap: 0.35rem; }
     </style>
 </head>
+<body class="flex min-h-screen bg-light text-dark font-display">
+    <!-- Sidebar -->
+     <aside class="w-64 min-h-screen bg-dark text-light flex flex-col">
 
-<body class="bg-light text-dark font-display flex flex-col min-h-screen overflow-x-hidden">
-    
-    {% include "seller_templates/seller_navbar.html" %}
-    {% include "core_templates/messages.html" %}
+    {% include "seller_templates/sellersidebar.html" %}
+    </aside>
 
-    <main class="max-w-7xl mx-auto w-full px-4 mt-8 relative group">
+    <!-- RIGHT SIDE (Content Area) -->
+    <div class="flex-1 flex flex-col">
+        {% include "core_templates/messages.html" %}
+
+        <!-- Top Right Profile Bar -->
+<div class="flex justify-end items-center px-6 py-4 bg-dark text-light border-b border-muted/30 shadow-sm">
+            <div class="flex items-center gap-3">
+
+                <!-- Profile Image -->
+                {% if request.user.is_authenticated and request.user.seller_profile.store_image %}
+                    <img src="{{ request.user.seller_profile.store_image.url }}"
+                         class="w-10 h-10 rounded-full object-cover border border-accent ">
+                {% else %}
+                    <div class="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center text-accent font-bold">
+                        {{ request.user.username|make_list|first|upper }}
+                    </div>
+                {% endif %}
+
+                <!-- Username -->
+<div class="text-sm font-bold text-light">
+    {{ request.user.username }}
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- MAIN CONTENT -->
+            <main class="flex-1 px-6 py-6 overflow-y-auto">
+
+            <!-- KEEP ALL YOUR EXISTING CONTENT HERE -->
         <div class="overflow-hidden bg-white border border-muted/30 rounded-xl py-2 mb-4 shadow-sm">
             <div class="marquee text-xs sm:text-sm font-semibold text-dark px-2">
                 <span class="marquee-item"><span class="material-icons text-[18px]">inventory_2</span>{{ total_products|default:"0" }} Listings</span>
@@ -146,7 +177,7 @@
                                 </div>
                             </div>
 
-                            <div class="flex items-center justify-between lg:hidden w-full pl-18">
+                            <div class="flex items-center justify-between lg:hidden w-full pl-16">
                                 <span class="font-black text-dark">₹{{ product.variants.first.selling_price|default:"--" }}</span>
                                 {% if product.approval_status == 'approved' %}
                                     <span class="bg-green-50 text-green-600 border border-green-200 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest">{{ product.get_approval_status_display }}</span>
@@ -256,12 +287,17 @@
                 {% endfor %}
             </div>
             
+            
         </div>
-    </main>
+         </main>
 
-    <footer class="bg-dark text-light py-3 text-center text-xs uppercase tracking-wide">
-        © {% now "Y" %} StackShop. All rights reserved.
-    </footer>
+        <footer class="bg-dark text-light py-3 text-center text-xs uppercase tracking-wide ">
+            © {% now "Y" %} StackShop. All rights reserved.
+        </footer>
+   
+</div>
+
+     
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
