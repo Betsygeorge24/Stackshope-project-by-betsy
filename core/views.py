@@ -47,19 +47,19 @@ def home_view(request):
     current_time = timezone.now()
 
     banners = (
-        Banner.objects.filter(
-            is_active=True,
-            start_date__lte=current_time,
-            end_date__gte=current_time,
-        )
-        .order_by("-created_at")
+    Banner.objects.filter(
+        is_active=True,
+        start_date__lte=current_time,
+        end_date__gte=current_time,
     )
+    .order_by("-created_at")[:5]
+)
 
     product_var = (
-        ProductVariant.objects.select_related("product__subcategory__category")
-        .prefetch_related("images")
-        .filter(product__approval_status="approved")
-    )
+    ProductVariant.objects.select_related("product__subcategory__category")
+    .prefetch_related("images")
+    .filter(product__approval_status="approved")[:12]
+)
 
     top_picks = (
         Product.objects.filter(approval_status="approved", is_active=True)
@@ -71,18 +71,16 @@ def home_view(request):
         return redirect(request.META.get("HTTP_REFERER", "admin_dashboard"))
     # if user.is_authenticated and user.role=="SELLER":
     #     return redirect(request.META.get('HTTP_REFERER', 'dashboard'))
-    wishlist_product_ids = set()
-    if user.is_authenticated:
-        wishlist_product_ids = set(
-            WishlistItem.objects.filter(wishlist__user=user)
-            .values_list("variant__product_id", flat=True)
-        )
-
+    wishlist_product_ids = set(
+    WishlistItem.objects.filter(wishlist__user=user)
+    .select_related("variant__product")
+    .values_list("variant__product_id", flat=True)
+)
     if user.is_authenticated:
         cart = Cart.objects.filter(user=user).first()
-        cart_items = CartItem.objects.filter(cart=cart).prefetch_related(
-            "variant__product__subcategory", "variant__images"
-        )
+        cart_items = CartItem.objects.filter(cart=cart).select_related(
+    "variant__product__subcategory"
+).prefetch_related("variant__images")
 
         for product in top_picks:
             product.is_in_wishlist = product.id in wishlist_product_ids
