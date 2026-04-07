@@ -84,8 +84,7 @@ def home_view(request):
 
         for product in top_picks:
             product.is_in_wishlist = product.id in wishlist_product_ids
-
-        return render(
+    return render(
             request,
             "core_templates/homepage.html",
             {
@@ -97,16 +96,7 @@ def home_view(request):
                 "banners": banners,
             },
         )
-    return render(
-        request,
-        "core_templates/homepage.html",
-        {
-            "categories": category_items,
-            "product_var": product_var,
-            "top_picks": top_picks,
-            "banners": banners,
-        },
-    )
+   
 
 # search-------------------------------------------------------------------------
 def search_and_filter_view(request):
