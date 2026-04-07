@@ -16,6 +16,9 @@ from .models import CustomUser, EmailOTP, Category, Banner
 from seller.models import *
 from django.db.models import Q
 import random
+from admin_app.models import Deal
+from seller.models import Product, ProductVariant, ProductImage
+from decimal import Decimal
 
 
 def _get_email_sender():
@@ -559,20 +562,22 @@ def logout_view(request):
     logout(request)
     return redirect("home")
 
-
 def category_view(request):
-    cart = Cart.objects.filter(user=request.user).first()
-    cart_items = CartItem.objects.filter(cart=cart).prefetch_related(
-        "variant__product__subcategory", "variant__images"
-    )
-    return render(request, "core_templates/categories.html", {"cart_items": cart_items})
+    cart_items = []
+
+    if request.user.is_authenticated:
+        cart = Cart.objects.filter(user=request.user).first()
+        if cart:
+            cart_items = CartItem.objects.filter(cart=cart).prefetch_related(
+                "variant__product__subcategory", "variant__images"
+            )
+
+    return render(request, "core_templates/categories.html", {
+        "cart_items": cart_items
+    })
 
 
 def deals_view(request):
-    from admin_app.models import Deal
-    from seller.models import Product, ProductVariant, ProductImage
-    from decimal import Decimal
-    
     if request.user.is_authenticated:
         cart = Cart.objects.filter(user=request.user).first()
         cart_items = CartItem.objects.filter(cart=cart).prefetch_related(
