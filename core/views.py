@@ -47,19 +47,19 @@ def home_view(request):
     current_time = timezone.now()
 
     banners = (
-    Banner.objects.filter(
-        is_active=True,
-        start_date__lte=current_time,
-        end_date__gte=current_time,
+        Banner.objects.filter(
+            is_active=True,
+            start_date__lte=current_time,
+            end_date__gte=current_time,
+        )
+        .order_by("-created_at")[:5]
     )
-    .order_by("-created_at")[:5]
-)
 
     product_var = (
-    ProductVariant.objects.select_related("product__subcategory__category")
-    .prefetch_related("images")
-    .filter(product__approval_status="approved")[:12]
-)
+        ProductVariant.objects.select_related("product__subcategory__category")
+        .prefetch_related("images")
+        .filter(product__approval_status="approved")[:12]
+    )
 
     top_picks = (
         Product.objects.filter(approval_status="approved", is_active=True)
@@ -67,24 +67,29 @@ def home_view(request):
         .prefetch_related("variants__images")
         .order_by("-review_count", "-created_at")[:12]
     )
+
+    # Admin redirect
     if user.is_authenticated and user.is_admin:
         return redirect(request.META.get("HTTP_REFERER", "admin_dashboard"))
-    # if user.is_authenticated and user.role=="SELLER":
-    #     return redirect(request.META.get('HTTP_REFERER', 'dashboard'))
-    wishlist_product_ids = set(
-    WishlistItem.objects.filter(wishlist__user=user)
-    .select_related("variant__product")
-    .values_list("variant__product_id", flat=True)
-)
+
+    # ✅ ONLY run these if logged in
     if user.is_authenticated:
+
+        wishlist_product_ids = set(
+            WishlistItem.objects.filter(wishlist__user=user)
+            .values_list("variant__product_id", flat=True)
+        )
+
         cart = Cart.objects.filter(user=user).first()
+
         cart_items = CartItem.objects.filter(cart=cart).select_related(
-    "variant__product__subcategory"
-).prefetch_related("variant__images")
+            "variant__product__subcategory"
+        ).prefetch_related("variant__images")
 
         for product in top_picks:
             product.is_in_wishlist = product.id in wishlist_product_ids
-    return render(
+
+        return render(
             request,
             "core_templates/homepage.html",
             {
@@ -96,7 +101,18 @@ def home_view(request):
                 "banners": banners,
             },
         )
-   
+
+    # ✅ For anonymous users (no DB calls with user)
+    return render(
+        request,
+        "core_templates/homepage.html",
+        {
+            "categories": category_items,
+            "product_var": product_var,
+            "top_picks": top_picks,
+            "banners": banners,
+        },
+    )
 
 # search-------------------------------------------------------------------------
 def search_and_filter_view(request):
@@ -635,6 +651,7 @@ def terms_conditions_view(request):
 
 def sitemap_view(request):
     return render(request, "core_templates/sitemap.html")
+
 
 
 # Create your views here.
