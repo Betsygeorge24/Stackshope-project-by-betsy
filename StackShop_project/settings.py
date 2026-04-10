@@ -115,12 +115,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-<<<<<<< Updated upstream
     'allauth.account.middleware.AccountMiddleware',
-=======
   'allauth.account.middleware.AccountMiddleware',
->>>>>>> Stashed changes
-]
+
 
 ROOT_URLCONF = 'StackShop_project.urls'
 
@@ -273,7 +270,6 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 
 DEFAULT_FROM_EMAIL = 'noreply@stackshop.com'
 #----------------------------------------------------------------------------------
-<<<<<<< Updated upstream
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'SCOPE': ['profile', 'email'],
@@ -283,4 +279,4 @@ SOCIALACCOUNT_PROVIDERS = {
         }
     }
 }
-=======
+
