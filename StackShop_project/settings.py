@@ -45,16 +45,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-      'django.contrib.sites',
-    'allauth',
-      'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
    'core',
     'admin_app',
     'seller',
     'customer',
-<<<<<<< Updated upstream
     'django.contrib.sites',
     'allauth',
     'allauth.account',
@@ -85,14 +79,7 @@ SOCIALACCOUNT_AUTO_SIGNUP = True
 if ENVIRONMENT == 'production':
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'SCOPE': ['profile', 'email', 'https://www.googleapis.com/auth/userinfo.profile'],
-        'AUTH_PARAMS': {
-            'access_type': 'online',
-        }
-    }
-}
+
 # -------------------- Hosts --------------------
 if ENVIRONMENT == 'production':
     ALLOWED_HOSTS = [DOMAIN]
@@ -116,8 +103,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
-  'allauth.account.middleware.AccountMiddleware',
-
+]
 
 ROOT_URLCONF = 'StackShop_project.urls'
 
@@ -175,14 +161,7 @@ SOCIALACCOUNT_AUTO_SIGNUP = True
 if ENVIRONMENT == 'production':
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'SCOPE': ['profile', 'email', 'https://www.googleapis.com/auth/userinfo.profile'],
-        'AUTH_PARAMS': {
-            'access_type': 'online',
-        }
-    }
-}
+
 # -------------------- Hosts --------------------
 ALLOWED_HOSTS = [
     "stackshopbybetsy.mysmeclabs.com",
@@ -241,7 +220,6 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
-<<<<<<< Updated upstream
 
 
 STATIC_URL = '/static/'
@@ -270,13 +248,23 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 
 DEFAULT_FROM_EMAIL = 'noreply@stackshop.com'
 #----------------------------------------------------------------------------------
+
+SOCIALACCOUNT_QUERY_EMAIL = True
+SOCIALACCOUNT_LOGIN_ON_GET = True
+SOCIALACCOUNT_EMAIL_REQUIRED = True
+SOCIALACCOUNT_AUTO_SIGNUP = True
+
 SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'SCOPE': ['profile', 'email'],
-        'AUTH_PARAMS': {
-            'access_type': 'online',
-            'prompt': 'select_account',   
-        }
+    "google": {
+        "SCOPE": [
+            "openid",
+            "email",
+            "profile",
+        ],
+        "AUTH_PARAMS": {
+            "access_type": "online",
+            "prompt": "select_account",
+        },
+        "OAUTH_PKCE_ENABLED": True,
     }
 }
-
