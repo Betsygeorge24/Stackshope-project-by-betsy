@@ -32,11 +32,10 @@ DEBUG = os.getenv('DEBUG', 'False').lower() in ('1', 'true', 'yes')
 # ALLOWED_HOSTS = ["*"]
 
 ALLOWED_HOSTS = [
-    '127.0.0.1',
-    'localhost',
-    'stackshopbybetsy.mysmeclabs.com'
+    "stackshopbybetsy.mysmeclabs.com",
+    "127.0.0.1",
+    "localhost",
 ]
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -46,16 +45,21 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'core',
+      'django.contrib.sites',
+    'allauth',
+      'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+   'core',
     'admin_app',
     'seller',
     'customer',
+<<<<<<< Updated upstream
     'django.contrib.sites',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
-   
 ]
 #google authentication
 ENVIRONMENT = os.getenv('ENVIRONMENT', 'local')
@@ -111,7 +115,11 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+<<<<<<< Updated upstream
     'allauth.account.middleware.AccountMiddleware',
+=======
+  'allauth.account.middleware.AccountMiddleware',
+>>>>>>> Stashed changes
 ]
 
 ROOT_URLCONF = 'StackShop_project.urls'
@@ -147,6 +155,50 @@ DATABASES = {
 }
 
 
+ENVIRONMENT = os.getenv('ENVIRONMENT', 'local')
+
+
+if ENVIRONMENT == 'production':
+    SITE_ID = 2
+else:
+    SITE_ID = 3
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_USERNAME_REQUIRED = False
+SOCIALACCOUNT_LOGIN_ON_GET = True
+SOCIALACCOUNT_AUTO_SIGNUP = True
+
+if ENVIRONMENT == 'production':
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': ['profile', 'email', 'https://www.googleapis.com/auth/userinfo.profile'],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        }
+    }
+}
+# -------------------- Hosts --------------------
+ALLOWED_HOSTS = [
+    "stackshopbybetsy.mysmeclabs.com",
+    "127.0.0.1",
+    "localhost",
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://stackshopbybetsy.mysmeclabs.com",
+]
+
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"
+#------------------------------Custom User Model------------------------------------
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
@@ -192,12 +244,12 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
+<<<<<<< Updated upstream
 
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / "staticfiles"
-
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -221,6 +273,7 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 
 DEFAULT_FROM_EMAIL = 'noreply@stackshop.com'
 #----------------------------------------------------------------------------------
+<<<<<<< Updated upstream
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'SCOPE': ['profile', 'email'],
@@ -230,3 +283,4 @@ SOCIALACCOUNT_PROVIDERS = {
         }
     }
 }
+=======
