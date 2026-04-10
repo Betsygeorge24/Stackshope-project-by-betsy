@@ -95,7 +95,7 @@
                         </div>
 
                         <div class="relative flex-1 min-h-[250px] chart-grid rounded-2xl border border-muted/20 overflow-hidden flex items-end">
-                            <svg class="w-full h-full absolute inset-0" preserveAspectRatio="none" viewBox="0 0 400 100">
+                            <canvas id="salesChart" class="w-full h-full">
                                 <defs>
                                     <linearGradient id="chartGradient" x1="0%" x2="0%" y1="0%" y2="100%">
                                         <stop offset="0%" stop-color="#30364F" stop-opacity="0.2"></stop>
@@ -104,7 +104,7 @@
                                 </defs>
                                 <path d="{{ path_d }} V 100 H 0 Z" fill="url(#chartGradient)"></path>
                                 <path d="{{ path_d }}" fill="none" stroke="#30364F" stroke-width="3" stroke-linecap="round"></path>
-                            </svg>
+                            </canvas>
                             
                             <div class="absolute inset-0 flex flex-col justify-between p-4 pointer-events-none">
                                 {% for val in y_labels %}
@@ -126,11 +126,7 @@
 
                         <div class="flex-1 flex items-center justify-center relative">
                             <div class="w-44 h-44 rounded-full border-[14px] border-light relative flex items-center justify-center">
-                                <svg class="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 32 32">
-                                    {% for cat in category_data %}
-                                    <circle cx="16" cy="16" r="14" fill="transparent" stroke="{% cycle '#30364F' '#ACBAC4' '#E1D9BC' '#888' %}" stroke-width="4" stroke-dasharray="{{ cat.percent }} 100" stroke-dashoffset="-{{ cat.offset|default:0 }}"></circle>
-                                    {% endfor %}
-                                </svg>
+                                <canvas id="categoryChart" class="w-44 h-44"></canvas>
                                 <div class="text-center">
                                     <div class="text-2xl font-black text-dark">{{ total_products }}</div>
                                     <div class="text-[8px] font-black text-muted uppercase">Items</div>
@@ -204,6 +200,85 @@
             </footer>
         </div>
     </div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const months = {{ months|safe }};
+const currentData = {{ current_data|safe }};
+const previousData = {{ previous_data|safe }};
 
+const ctx = document.getElementById('salesChart').getContext('2d');
+
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: months,
+        datasets: [
+            {
+                label: 'Current',
+                data: currentData,
+                borderColor: '#30364F',
+                backgroundColor: 'rgba(48,54,79,0.1)',
+                tension: 0.4,
+                fill: true
+            },
+            {
+                label: 'Previous',
+                data: previousData,
+                borderColor: '#ACBAC4',
+                borderDash: [6, 6],
+                tension: 0.4,
+                fill: false
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            x: {
+                ticks: {
+                    color: '#ACBAC4',
+                    font: { size: 10, weight: 'bold' }
+                }
+            },
+            y: {
+                ticks: {
+                    callback: value => '₹' + value,
+                    color: '#ACBAC4',
+                    font: { size: 10 }
+                },
+                grid: {
+                    color: 'rgba(172,186,196,0.2)'
+                }
+            }
+        }
+    }
+});
+
+
+// 🔹 Category Chart
+const catCtx = document.getElementById('categoryChart').getContext('2d');
+
+new Chart(catCtx, {
+    type: 'doughnut',
+    data: {
+        labels: {{ category_labels|safe }},
+        datasets: [{
+            data: {{ category_values|safe }},
+            backgroundColor: ['#30364F', '#ACBAC4', '#E1D9BC', '#888'],
+            borderWidth: 0
+        }]
+    },
+    options: {
+        cutout: '70%',
+        plugins: {
+            legend: { display: false }
+        }
+    }
+});
+</script>
 </body>
 </html>

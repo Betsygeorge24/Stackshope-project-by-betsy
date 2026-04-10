@@ -18,4 +18,5 @@ urlpatterns = [
     path('seller-inventory/', views.seller_inventory_view, name='seller_inventory'),
     path('seller-settings/', views.seller_settings_view, name='seller_settings'),
     path("delete-image/<int:image_id>/", views.delete_product_image, name="delete_product_image"),
+    path('export-orders/', views.export_orders_csv, name='export_orders_csv'),
 ]

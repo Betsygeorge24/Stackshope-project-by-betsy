@@ -5,7 +5,7 @@ from core.decorators import seller_required, verified_seller_required
 from .models import *
 from core.models import *
 from core.models import Category
-from django.db.models import Count, Avg, Max, Sum, Q
+from django.db.models import Count, Avg, Max, Sum, Q,F
 from customer.models import Order, OrderItem, Review
 from django.contrib import messages
 import random
@@ -48,10 +48,10 @@ def dashboard_view(request):
     total_products = products.count()
 
     active_orders = (
-        OrderItem.objects.filter(seller=seller)
-        .exclude(status__in=["delivered", "cancelled"])
-        .count()
-    )
+    OrderItem.objects.filter(seller=seller)
+    .exclude(order__order_status__in=["delivered", "cancelled"])
+    .count()
+)
 
     needs_shipping = (
     OrderItem.objects.filter(
@@ -76,17 +76,15 @@ def dashboard_view(request):
         OrderItem.objects.filter(seller=seller).values("order_id").distinct().count()
     )
     pending_actions = (
-        OrderItem.objects.filter(seller=seller, status=["pending"])
-        .values("order_id")
-        .distinct()
-        .count()
+    OrderItem.objects.filter(seller=seller,  order__order_status__iexact="pending")
+    .values("order_id")
+    .distinct()
+    .count()
     )
     revenue_from_completed = (
-        OrderItem.objects.filter(seller=seller, status="delivered").aggregate(
-            total=Sum("price_at_purchase")
-        )["total"]
-        or 0
-    )
+    OrderItem.objects.filter(seller=seller,order__order_status__iexact="delivered")
+    .aggregate(total=Sum(F("price_at_purchase") * F("quantity")))
+    )["total"] or 0
 
     approved_products = products.filter(approval_status="approved").count()
     pending_products = products.filter(approval_status="pending").count()
@@ -682,7 +680,7 @@ def seller_customers_orders(request):
     query = request.GET.get("q", "").strip()
     status = request.GET.get("status", "all").lower()
 
-    # ✅ STEP 1: Filter FIRST (important)
+    # ✅ STEP 1: Filter FIRST
     base_queryset = OrderItem.objects.filter(seller=seller)
 
     if status != "all":
@@ -697,33 +695,63 @@ def seller_customers_orders(request):
             | Q(variant__product__name__icontains=query)
         )
 
-    # ✅ STEP 2: Only fetch needed data (OPTIMIZED)
+    # ✅ STEP 2: Optimize
     base_queryset = base_queryset.select_related(
         "order__user",
         "variant",
         "variant__product"
     ).order_by("-order__ordered_at")
 
-    # ❌ REMOVE heavy image prefetch (this was killing performance)
-    # .prefetch_related("variant__images")
-
-    # ✅ STEP 3: Pagination EARLY
-    paginator = Paginator(base_queryset, 10)  # force limit 10
+    # ✅ STEP 3: Pagination
+    paginator = Paginator(base_queryset, 10)
     page_number = request.GET.get("page")
     orders_page = paginator.get_page(page_number)
 
-    # ✅ STEP 4: lightweight calculation
+    # ✅ STEP 4: Calculate item total
     for item in orders_page:
         item.total_price = item.price_at_purchase * item.quantity
 
+    # 🔥 STEP 5: DASHBOARD DATA (INSIDE FUNCTION)
+    total_orders = (
+        OrderItem.objects.filter(seller=seller)
+        .values("order_id")
+        .distinct()
+        .count()
+    )
+
+    pending_actions = (
+        OrderItem.objects.filter(
+            seller=seller,
+            order__order_status__iexact="pending"
+        )
+        .values("order_id")
+        .distinct()
+        .count()
+    )
+
+    total_revenue = (
+        OrderItem.objects.filter(
+            seller=seller,
+            order__order_status__iexact="delivered"
+        )
+        .aggregate(
+            total=Sum(F("price_at_purchase") * F("quantity"))
+        )["total"] or 0
+    )
+
+    # ✅ STEP 6: PASS TO TEMPLATE
     return render(request, "seller_templates/customer_orders.html", {
         "orders": orders_page,
         "page_obj": orders_page,
         "paginator": paginator,
         "current_status": status,
         "query": query,
-    })
 
+        # 🔥 IMPORTANT
+        "total_orders": total_orders,
+        "pending_actions": pending_actions,
+        "total_revenue": total_revenue,
+    })
 @verified_seller_required
 def update_order_status(request):
     if request.method == "POST":
@@ -830,3 +858,79 @@ def delete_product_image(request, image_id):
         image.delete()
 
     return redirect(request.META.get("HTTP_REFERER"))
+
+import csv
+from django.http import HttpResponse
+from django.db.models import Q
+
+@verified_seller_required
+def export_orders_csv(request):
+    seller = request.user.seller_profile
+    query = request.GET.get("q", "").strip()
+    status = request.GET.get("status", "all").lower()
+
+    orders = OrderItem.objects.filter(seller=seller).select_related(
+        "order__user",
+        "variant__product",
+        "order__address"
+    )
+
+    if status != "all":
+        orders = orders.filter(order__order_status__iexact=status)
+
+    if query:
+        orders = orders.filter(
+            Q(order__order_number__icontains=query)
+            | Q(order__user__first_name__icontains=query)
+            | Q(order__user__username__icontains=query)
+        )
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="orders_detailed.csv"'
+
+    writer = csv.writer(response)
+
+    # ✅ FULL HEADER
+    writer.writerow([
+        "Order ID",
+        "Product",
+        "Customer Name",
+        "Email",
+        "Phone",
+        "Quantity",
+        "Unit Price",
+        "Total Price",
+        "Payment Status",
+        "Order Status",
+        "Date",
+        "Address"
+    ])
+
+    # ✅ FULL DATA
+    for item in orders:
+        order = item.order
+        user = order.user
+        address = order.address
+
+        total_price = item.price_at_purchase * item.quantity
+
+        full_address = ""
+        if address:
+            full_address = f"{address.house_info}, {address.locality}, {address.city}, {address.state} - {address.pincode}"
+
+        writer.writerow([
+            order.order_number,
+            item.variant.product.name,
+            f"{user.first_name} {user.last_name}",
+            user.email,
+            getattr(user, "phone_number", ""),
+            item.quantity,
+            item.price_at_purchase,
+            total_price,
+            order.payment_status,
+            order.order_status,
+            order.ordered_at.strftime("%Y-%m-%d %H:%M"),
+            full_address
+        ])
+
+    return response

@@ -1,3 +1,4 @@
+
 """
 Django settings for StackShop_project project.
 
@@ -18,8 +19,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load environment variables from .env file
 load_dotenv(BASE_DIR / ".env")
-
-
 
 
 # Quick-start development settings - unsuitable for production
@@ -56,6 +55,7 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+   
 ]
 #google authentication
 ENVIRONMENT = os.getenv('ENVIRONMENT', 'local')
@@ -181,12 +181,24 @@ USE_I18N = True
 USE_TZ = True
 
 
+
+
+# Django 4.2+ storage config---------------------------------------------------------
+
+
+#STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/static/"
+# FORCE override (important)
+
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
+
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -209,3 +221,12 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 
 DEFAULT_FROM_EMAIL = 'noreply@stackshop.com'
 #----------------------------------------------------------------------------------
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': ['profile', 'email'],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+            'prompt': 'select_account',   
+        }
+    }
+}
