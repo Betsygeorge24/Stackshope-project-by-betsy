@@ -55,30 +55,23 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
 ]
+
 #google authentication
-ENVIRONMENT = os.getenv('ENVIRONMENT', 'local')
+
+ENVIRONMENT = os.getenv("ENVIRONMENT", "local")
+
+if ENVIRONMENT == "production":
+    SITE_ID = 8
+else:
+  SITE_ID = 7
+
 DOMAIN = os.getenv('DOMAIN')
 
-if ENVIRONMENT == 'production':
-    SITE_ID = 2
-else:
-    SITE_ID = 3
+
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/'
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_USERNAME_REQUIRED = False
-SOCIALACCOUNT_LOGIN_ON_GET = True
-SOCIALACCOUNT_AUTO_SIGNUP = True
-
-if ENVIRONMENT == 'production':
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
 
 # -------------------- Hosts --------------------
 if ENVIRONMENT == 'production':
@@ -103,6 +96,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
+  
 ]
 
 ROOT_URLCONF = 'StackShop_project.urls'
@@ -138,26 +132,19 @@ DATABASES = {
 }
 
 
-ENVIRONMENT = os.getenv('ENVIRONMENT', 'local')
 
 
-if ENVIRONMENT == 'production':
-    SITE_ID = 2
-else:
-    SITE_ID = 3
+
+
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_USERNAME_REQUIRED = False
-SOCIALACCOUNT_LOGIN_ON_GET = True
-SOCIALACCOUNT_AUTO_SIGNUP = True
 
+
+SOCIALACCOUNT_ADAPTER = "allauth.socialaccount.adapter.DefaultSocialAccountAdapter"
 if ENVIRONMENT == 'production':
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
@@ -173,7 +160,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://stackshopbybetsy.mysmeclabs.com",
 ]
 
-ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"
+
 #------------------------------Custom User Model------------------------------------
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -249,10 +236,6 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = 'noreply@stackshop.com'
 #----------------------------------------------------------------------------------
 
-SOCIALACCOUNT_QUERY_EMAIL = True
-SOCIALACCOUNT_LOGIN_ON_GET = True
-SOCIALACCOUNT_EMAIL_REQUIRED = True
-SOCIALACCOUNT_AUTO_SIGNUP = True
 
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
@@ -268,3 +251,18 @@ SOCIALACCOUNT_PROVIDERS = {
         "OAUTH_PKCE_ENABLED": True,
     }
 }
+
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_AUTHENTICATION_METHOD = "email"
+
+
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_LOGIN_ON_GET = True
+SOCIALACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_REQUIRED = True
+
+ACCOUNT_EMAIL_VERIFICATION = "none"
+SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
+
+SOCIALACCOUNT_ADAPTER = "allauth.socialaccount.adapter.DefaultSocialAccountAdapter"

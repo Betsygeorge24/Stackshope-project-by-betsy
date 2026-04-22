@@ -349,7 +349,11 @@ def seller_bridge(request):
         return redirect("dashboard")
 
     if request.method == "POST":
+        kyc_document = request.FILES.get("kyc_document")
 
+        SellerKYC.objects.create(
+        kyc_document=kyc_document
+         )
         if request.user.is_authenticated:
             seller_profile, created = SellerProfile.objects.get_or_create(
                 user=request.user
@@ -366,6 +370,7 @@ def seller_bridge(request):
                 seller_profile.store_image = request.FILES.get("logo")
 
             seller_profile.save()
+            
 
             user = request.user
             user.is_seller = True

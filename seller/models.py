@@ -203,4 +203,8 @@ class InventoryLog(models.Model):
     
     def __str__(self):
         return f"Inventory change for {self.variant.sku_code}: {self.change_amount} ({self.reason})"
+    
+
+class SellerKYC(models.Model):
+    kyc_document = models.FileField(upload_to='kyc/')
 # Create your models here.

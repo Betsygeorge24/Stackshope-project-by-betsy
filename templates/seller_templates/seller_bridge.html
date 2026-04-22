@@ -226,6 +226,31 @@
                     </div>
                 </div>
 
+
+                <div class="bg-white rounded-xl shadow-sm border border-muted/50 p-6 md:p-8">
+    <h2 class="text-lg font-bold text-dark border-b border-muted/30 pb-3 mb-6 flex items-center gap-2">
+        <span class="material-icons text-accent">verified_user</span> KYC Verification
+    </h2>
+
+    <div class="grid grid-cols-1 gap-6">
+
+        <!-- KYC Document -->
+        <div class="border-2 border-dashed border-dark rounded-xl p-6 flex flex-col items-center justify-center text-center bg-light/20 relative group hover:bg-light/50 transition-colors">
+            <span class="material-icons text-4xl text-dark mb-2">badge</span>
+            <h4 class="text-sm font-bold text-dark mb-1">Upload KYC Document</h4>
+            <p class="text-[10px] text-muted uppercase tracking-widest mb-4">
+                Aadhaar / PAN / Passport
+            </p>
+            <input type="file" name="kyc_document" accept="image/*,.pdf" required
+                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+            <span class="bg-dark text-light px-4 py-2 rounded text-xs font-bold pointer-events-none">
+                Choose File
+            </span>
+        </div>
+
+    </div>
+</div>
+
                 <div class="mt-8 pt-6 border-t border-muted/30">
                     <label class="flex items-start gap-3 cursor-pointer mb-6 group">
                         <input type="checkbox" required class="mt-1 w-4 h-4 rounded border-muted text-dark focus:ring-dark cursor-pointer transition-colors">
