@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title description">
+  <title id="title">StackShop</title>
+  <desc id="description">StackShop shopping bag logo</desc>
+  <rect width="128" height="128" rx="28" fill="#30364F"/>
+  <path d="M40 49h48l-5 56H45l-5-56Zm9-11c0-10 6-18 15-18s15 8 15 18v8H49v-8Z" fill="#E1D9BC"/>
+  <circle cx="64" cy="79" r="8" fill="#30364F"/>
+</svg>
