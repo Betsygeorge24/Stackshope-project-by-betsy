@@ -18,7 +18,6 @@ Django
 django-allauth
 django-crispy-forms
 django-filter
-django-rest-framework
 django-widget-tweaks
 djangorestframework
 dnspython
@@ -33,7 +32,6 @@ jmespath
 MarkupSafe
 MouseInfo
 mysql-connector-python
-mysqlclient
 oauthlib
 openpyxl
 Pillow
