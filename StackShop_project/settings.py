@@ -28,6 +28,14 @@ load_dotenv(BASE_DIR / ".env")
 SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False').lower() in ('1', 'true', 'yes')
+ENVIRONMENT = os.getenv("ENVIRONMENT", "local")
+
+# Production security defaults are enforced only when running in production.
+SECURE_HSTS_SECONDS = 31536000 if ENVIRONMENT == "production" else 0
+SECURE_SSL_REDIRECT = ENVIRONMENT == "production"
+SESSION_COOKIE_SECURE = ENVIRONMENT == "production"
+CSRF_COOKIE_SECURE = ENVIRONMENT == "production"
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https') if ENVIRONMENT == "production" else None
 
 # ALLOWED_HOSTS = ["*"]
 
@@ -58,12 +66,10 @@ INSTALLED_APPS = [
 
 #google authentication
 
-ENVIRONMENT = os.getenv("ENVIRONMENT", "local")
-
 if ENVIRONMENT == "production":
     SITE_ID = 8
 else:
-  SITE_ID = 7
+    SITE_ID = 7
 
 DOMAIN = os.getenv('DOMAIN')
 
@@ -82,6 +88,9 @@ else:
     ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
     CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000']
     ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http'
+
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 #------------------------------Custom User Model--------------------------------------
 
 AUTH_USER_MODEL = 'core.CustomUser'
@@ -89,6 +98,7 @@ LOGIN_URL = 'login'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -124,13 +134,28 @@ WSGI_APPLICATION = 'StackShop_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+DATABASE_URL = os.getenv('DATABASE_URL')
+if DATABASE_URL:
+    import urllib.parse
 
+    parsed = urllib.parse.urlparse(DATABASE_URL)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': parsed.path.lstrip('/'),
+            'USER': parsed.username,
+            'PASSWORD': parsed.password,
+            'HOST': parsed.hostname,
+            'PORT': parsed.port or '5432',
+        }
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 
@@ -164,6 +189,14 @@ CSRF_TRUSTED_ORIGINS = [
 #------------------------------Custom User Model------------------------------------
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
+
+if ENVIRONMENT == 'production':
+    CSRF_TRUSTED_ORIGINS = [
+        f"https://{DOMAIN}",
+        f"https://www.{DOMAIN}",
+    ]
+else:
+    CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000']
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -212,7 +245,12 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / "staticfiles"
-
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -253,14 +291,11 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_AUTHENTICATION_METHOD = "email"
 
 
 SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_LOGIN_ON_GET = True
 SOCIALACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_EMAIL_REQUIRED = True
 
 ACCOUNT_EMAIL_VERIFICATION = "none"
 SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
