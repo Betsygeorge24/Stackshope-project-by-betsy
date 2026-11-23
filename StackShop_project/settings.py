@@ -39,11 +39,6 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https') if ENVIRONMENT == 
 
 # ALLOWED_HOSTS = ["*"]
 
-ALLOWED_HOSTS = [
-    "stackshopbybetsy.mysmeclabs.com",
-    "127.0.0.1",
-    "localhost",
-]
 # Application definition
 
 INSTALLED_APPS = [
@@ -71,7 +66,15 @@ if ENVIRONMENT == "production":
 else:
     SITE_ID = 7
 
-DOMAIN = os.getenv('DOMAIN')
+DOMAIN = os.getenv('DOMAIN', '').strip()
+RAILWAY_PUBLIC_DOMAIN = os.getenv('RAILWAY_PUBLIC_DOMAIN', '').strip()
+DEPLOYMENT_HOSTS = [host for host in (DOMAIN, RAILWAY_PUBLIC_DOMAIN) if host]
+ALLOWED_HOSTS = list(dict.fromkeys([
+    "stackshopbybetsy.mysmeclabs.com",
+    "127.0.0.1",
+    "localhost",
+    *DEPLOYMENT_HOSTS,
+]))
 
 
 AUTHENTICATION_BACKENDS = [
@@ -81,11 +84,13 @@ AUTHENTICATION_BACKENDS = [
 
 # -------------------- Hosts --------------------
 if ENVIRONMENT == 'production':
-    ALLOWED_HOSTS = [DOMAIN]
-    CSRF_TRUSTED_ORIGINS = [f'https://{DOMAIN}']
+    CSRF_TRUSTED_ORIGINS = list(dict.fromkeys([
+        "https://stackshopbybetsy.mysmeclabs.com",
+        "https://www.stackshopbybetsy.mysmeclabs.com",
+        *[f"https://{host}" for host in DEPLOYMENT_HOSTS],
+    ]))
     ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'
 else:
-    ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
     CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000']
     ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http'
 
@@ -174,29 +179,9 @@ if ENVIRONMENT == 'production':
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
-# -------------------- Hosts --------------------
-ALLOWED_HOSTS = [
-    "stackshopbybetsy.mysmeclabs.com",
-    "127.0.0.1",
-    "localhost",
-]
-
-CSRF_TRUSTED_ORIGINS = [
-    "https://stackshopbybetsy.mysmeclabs.com",
-]
-
-
 #------------------------------Custom User Model------------------------------------
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
-
-if ENVIRONMENT == 'production':
-    CSRF_TRUSTED_ORIGINS = [
-        f"https://{DOMAIN}",
-        f"https://www.{DOMAIN}",
-    ]
-else:
-    CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000']
 
 AUTH_PASSWORD_VALIDATORS = [
     {
